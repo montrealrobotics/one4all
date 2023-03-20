@@ -1,0 +1,31 @@
+# @package _global_
+
+environment: 'habitat'
+resize: 96
+local_emb_dim: 256
+n_actions: 5
+
+# Specific environments to use for training, validation and testing
+environments: [Annawan]
+val_environments: [Annawan]
+test_environments: [Annawan]
+
+# Environment for simulation
+sim_env: "Annawan"
+
+# Checkpoint paths
+checkpoints:
+  base_path: "components/habitat"
+  backbone_path: "${checkpoints.base_path}/backbone.ckpt"  # Backbone + connectivity head
+  fd_path: "${checkpoints.base_path}/fd.ckpt"
+
+  # Warning. This path can be updated in the simulator script depending on sim_env
+  # to easily change between geodesic regressor heads
+  gr_path: "${checkpoints.base_path}/geodesic_regressors/annawan.ckpt"
+
+# Specific datamodule parameters
+datamodule:
+  panorama: true
+  k: 2
+  gt_radius: [.25, 0.261799]  # [0.25, 15 degrees (pi/12)]
+  drop_last: true

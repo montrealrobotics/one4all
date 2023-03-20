@@ -1,0 +1,15 @@
+# @package _global_
+
+environment: ???          # 'habitat' or 'maze'
+resize: ???               # Resize images to (resize, resize)
+local_emb_dim: ???        # Output dim of the backbone. We set this globally to sync all components
+n_actions: ???            # Dimension of the state space
+
+# Specific environments to use for training, validation and testing
+environments: ???         # List of environments to train
+val_environments: ???     # List of environments to val on
+test_environments: ???    # List of environments to test on
+
+# Environment for simulation
+sim_env: "Annawan"
+

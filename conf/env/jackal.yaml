@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - habitat
+
+environments: [jackal]
+val_environments: [jackal]
+test_environments: [jackal]
+
+sim_env: null
+
+checkpoints:
+  base_path: "components/jackal"
+  backbone_path: "${checkpoints.base_path}/backbone_finetuned.ckpt"  # Backbone + connectivity head
+  fd_path: "${checkpoints.base_path}/fd.ckpt"
+  gr_path: "${checkpoints.base_path}/gr.ckpt"
+
+

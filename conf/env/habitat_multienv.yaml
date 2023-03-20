@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - habitat
+
+environments: [Annawan, Nicut, Cantwell, Eastville, Hambleton, Dunmor, Sodaville, Aloha]
+val_environments: [Annawan, Nicut, Cantwell, Eastville, Hambleton, Dunmor, Sodaville, Aloha]
+test_environments: [Annawan, Nicut, Cantwell, Eastville, Hambleton, Dunmor, Sodaville, Aloha]

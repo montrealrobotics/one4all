@@ -1,0 +1,19 @@
+# @package _global_
+
+environment: 'maze'
+resize: 64
+local_emb_dim: 32
+n_actions: 10  # 8 actions + NOT_CONNECTED + STOP
+
+# Specific environments to use for training, validation and testing
+environments: [omaze_random]
+val_environments: [omaze_random]
+test_environments: [omaze_random]
+
+# Environment for simulation
+sim_env: "omaze"
+
+datamodule:
+  panorama: false
+  k: 1
+  gt_radius: [1.5, 1.571]  # [0.21, 0.262]

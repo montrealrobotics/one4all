@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - maze
+
+environments: ['empty_random', 'hmaze_random', 'buttonmaze_random', 'two_doors_random', '9_rooms_random', 'random_shape_random', 'random_shape1_random', 'random_shape2_random', 'random_shape3_random']
+val_environments: ['umaze_random', 'bugtrap_random', 'random_shape5_random']
+test_environments: ['omaze_random', 'room_random', 'random_shape4_random']
