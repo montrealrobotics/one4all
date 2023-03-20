@@ -1,0 +1,79 @@
+defaults:
+  - _self_                                      # Override default config with derived ones
+  - log_dir: default                       # set logging directory for hydra/logger
+  - logger: null                                # set logger, options are [null, comet]
+  - launcher: local                            # launcher used for the job, options are [remote, local, null]
+
+  - hparams_search: optuna
+  - experiment: null
+  - policy: ???
+  - metric: val_loss                       # set logging directory for hydra/logger
+  - checkpoints: null   # Points to habitat by default
+  - env: ???
+
+    # enable color logging
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
+# path to original working directory
+# hydra hijacks working directory by changing it to the new log directory
+# https://hydra.cc/docs/next/tutorials/basic/running_your_app/working_directory
+original_work_dir: ${hydra:runtime.cwd}
+
+# path to folder with data
+data_dir: ${original_work_dir}/data/
+
+# pretty print config at the start of the run using Rich library
+print_config: True
+# disable python warnings if they annoy you
+ignore_warnings: True
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 12345
+
+# default name for the experiment, determines logging folder path
+# (you can overwrite this name in experiment configs)
+name: test
+
+# Data environment. Used to interpolate the parameters of the models and datamodules
+environment: habitat
+sim_env: ???
+
+split: .3
+collect_data: false  # Save trajectory data to the data folder
+data_type: se2       # Options are [se2, grid, s1]
+reset_on_collision: False # Reset to previous state if we collide. Also resets observations. Useful to stay on Grid?
+new_goal_on_collision: False  # Sample new goal on collision to avoid expert getting stuck
+
+# Simulator parameters. Will override imagenav.yaml
+data_path: data_habitat/datasets/pointnav/o4a/
+agent_name: "O4A - Front Camera"
+difficulty: hard    # easy, medium, hard or very_hard
+v: .25              # Linear speed of the agent. v=1.00 for grid, v=0.25 for continuous
+w: 15               # Angular speed of the agent w=90 for grid, w=15 for continuous
+agent_radius: 0.1   # Radius of the agent
+
+# Grid hyperparams
+grid_params:
+  d2o: 1.5            # Distance to obstacle, defines closeness of grid points to obstacles
+  visualize: false    # Used for debugging, visualize the grid
+  
+panorama: true  #
+pan_delta: 180  # Camera rotation between panorama images. 180 = 2 images (front and back). 90 = 4 images.
+
+# Test parameters
+test_params:
+  min_steps: 0  # Only works for grid. WARNING: Using this makes metrics unreliable. Intended for data collection. Set to 0 to get proper metrics.
+  max_steps: 500
+  n_trajectories: 10
+
+# Gif parameters
+gif_params:
+  viz_depth: false   # Use depth data instead of RGB for visualization. Cannot be used during data collection
+  goal: false  # Generate image/goal gif. Set to false to avoid generating gif.
+  topdown: false # Generate image/map gif. Set to false to avoid generating gif.
+  failures: false
+  collisions: false  # Set to true to color image frames based on collision model predictions
+  duration: .1  # Duration of each frame
+  high_quality: false  # Used to render images + map at higher quality
+  log_n_first: -1   # Number of trajectories to log, if -1 logs them all

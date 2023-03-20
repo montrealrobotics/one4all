@@ -1,0 +1,4 @@
+_target_: src.models.policies.habitat.ShortestPathPolicy
+goal_radius: 0.2
+random_p: 0.0
+random_state: ${seed}

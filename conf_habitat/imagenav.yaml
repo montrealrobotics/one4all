@@ -1,0 +1,69 @@
+# WARNING: Some parameters are overriden by the hydra config. See conf/run_habitat.yaml
+ENVIRONMENT:
+  MAX_EPISODE_STEPS: 100  # HYDRA
+
+SIMULATOR:
+  AGENT_0:
+    SENSORS: ["RGB_SENSOR", "DEPTH_SENSOR", "HEAD_RGB_SENSOR"]
+    HEIGHT: 0.4
+  HABITAT_SIM_V0:
+    ALLOW_SLIDING: true
+    GPU_DEVICE_ID: 0
+  RGB_SENSOR:
+    HFOV: 90
+    WIDTH: 128
+    HEIGHT: 128
+    POSITION: [0.0, 0.4, 0.0]
+  DEPTH_SENSOR:  # WARNING : Review depth_to_point_cloud function if you change this.
+    HFOV: 140
+    WIDTH: 128
+    HEIGHT: 128
+    POSITION: [0.0, 0.0, 0.0]
+  HEAD_RGB_SENSOR:
+    HFOV: 90
+    WIDTH: 256
+    HEIGHT: 256
+    POSITION: [ 0.0, 0.4, 0.0 ]
+  FORWARD_STEP_SIZE: .25  # HYDRA
+  TURN_ANGLE: 15  # HYDRA
+  ACTION_SPACE_CONFIG: "pyrobotnoisy"
+  NOISE_MODEL:
+    ROBOT: "LoCoBot"
+    CONTROLLER: "Proportional"
+    NOISE_MULTIPLIER: 0.0  # 0.5 is used in the habitat code
+
+TASK:
+  TYPE: Nav-v0
+
+#  SENSORS: ['IMAGEGOAL_SENSOR']  # We'll generate goal images manually to better control the goal angle
+
+  MEASUREMENTS: ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "COLLISIONS"]
+  SUCCESS:
+    SUCCESS_DISTANCE: 1.
+    
+#  ACTIONS:
+#    BASE_VELOCITY:
+#      ALLOW_DYN_SLIDE : False
+
+  TOP_DOWN_MAP:
+    DRAW_BORDER: True
+    DRAW_GOAL_AABBS: False
+    DRAW_GOAL_POSITIONS: True
+    DRAW_SHORTEST_PATH: False
+    DRAW_SOURCE: True
+    DRAW_VIEW_POINTS: True
+    FOG_OF_WAR:
+      DRAW: False
+      FOV: 90
+      VISIBILITY_DIST: 5.0
+    MAP_PADDING: 3
+    MAP_RESOLUTION: 512
+    MAX_EPISODE_STEPS: 1000
+    TYPE: TopDownMap
+
+DATASET:
+  TYPE: 'PointNav-v1'
+  SCENES_DIR: 'data_habitat/scene_datasets'
+  DATA_PATH: 'data_habitat/datasets/pointnav/o4a/skokloster-castle.json.gz'
+#  DATA_PATH: 'data_habitat/datasets/pointnav/o4a/apartment_1.json.gz'
+

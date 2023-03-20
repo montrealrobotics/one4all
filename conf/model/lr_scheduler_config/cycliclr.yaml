@@ -1,0 +1,15 @@
+defaults:
+  - base
+
+interval: epoch
+
+scheduler:
+  _partial_: true
+  _target_: torch.optim.lr_scheduler.CyclicLR
+  base_lr: 1e-5
+  max_lr: 5e-3
+  mode: exp_range
+  step_size_up: 50
+  step_size_down: 50
+  cycle_momentum: false
+  verbose: true

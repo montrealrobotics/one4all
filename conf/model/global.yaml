@@ -1,0 +1,9 @@
+defaults:
+  - base
+  - net: global
+  - net@head: regressor
+
+_target_: src.models.global_metric.GlobalMetric
+local_metric_path: ${checkpoints.backbone_path}  # Path to local checkpoing
+n_edges: 10000       # Number of edges randomly sampled to plot connectivity graph to debug local
+noise: 1e-1          # Corrupt with gaussian noise local codes for robustness

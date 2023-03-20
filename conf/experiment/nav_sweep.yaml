@@ -1,0 +1,38 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /logger: comet
+  - override /log_dir: default
+  - override /launcher: ???
+  - override /hparams_search: optuna
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# name of the run determines folder name in logs
+name: nav
+
+sim_env: Nicut
+difficulty: hard
+
+gif_params:
+  goal: false
+  topdown: false
+  log_n_first: 10   # Log ten first videos
+  collisions: false  # Viz collisions
+
+# Sweeper tweaks
+hydra:
+  sweeper:
+    n_trials: 30
+    n_jobs: ${hydra.sweeper.n_trials}
+    params:
+      policy: choice(o4a_laser)
+      policy.radius: choice(1.5, 2., 2.5, 3., 3.5, 4.)
+      policy.stop_d_local: choice(2., 3., 3.5, 4., 4.5, 5.)
+      policy.rep_factor: choice(1.0)
+      test_params.max_steps: choice(500)
+      test_params.n_trajectories: choice(1000)

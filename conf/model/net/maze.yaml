@@ -1,0 +1,13 @@
+_target_: src.models.components.local_net.LocalMetricMaze
+emb_dim: ${local_emb_dim}                   # Embedding dimension of local metric
+k: ${datamodule.k}           # Set in datamodule
+norm: false                  # Normalize output to norm 1
+normalize_output: false      # Standard scale the output with a batch norm layer
+bn_momentum: .1              # Batch norm momentum. Set to 0.0 to disable batch norm.
+activation: "relu"           # Possible activations functions [sigmoid, relu, tanh, leaky_relu, elu]
+predictor: "mlp"             # Type of predictor head [conv1d, transformer, mlp]
+# Transformer Params
+num_blocks: 2                # Number of transformer (encoder) blocks
+dropout: 0.0                 # Dropout of transformer
+num_heads: 2                 # Number of heads in each transformer block
+use_cls: True                # Whether to return the embedding of CLS token or anchor token

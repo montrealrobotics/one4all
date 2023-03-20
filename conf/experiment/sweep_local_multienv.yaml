@@ -1,0 +1,26 @@
+# @package _global_
+
+defaults:
+  - sweep_local_hinge
+  - override /datamodule: local
+  - override /model: local
+  - override /model/net: habitat
+  - override /metric: val_f1_ssl
+  - override /model/loss: ce_hinge
+
+# name of the run determines folder name in logs
+name: "local_metric_multi"
+
+epochs: 700
+freeze_at_epoch: 600
+
+datamodule:
+  drop_last: true
+  per_env_batches: false
+  
+model:
+  log_figure_every_n_epoch: 50
+  step_every: 1
+  
+trainer:
+  check_val_every_n_epoch: 1              # Check validation every n epochs

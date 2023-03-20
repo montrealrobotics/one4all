@@ -1,0 +1,35 @@
+pandas==1.4.2
+albumentations==1.1.0
+networkx==2.8.2
+rich==12.4.4
+# Submitit with experimental branch
+git+https://github.com/facebookincubator/submitit@escape_all#egg=submitit
+hydra-core==1.2.0
+hydra-colorlog==1.2.0
+# Submitit launcher
+git+https://github.com/MikeS96/hydra_submitit_launcher@main#egg=hydra-submitit-launcher
+hydra_optuna_sweeper==1.2.0
+scikit-learn==1.0.2
+comet_ml==3.28.2
+gym==0.22.0
+imageio==2.16.0
+matplotlib==3.5.1
+numpy==1.22.2
+Pillow==9.1.0
+pytorch-lightning==1.6.0
+protobuf<4.21.0
+scikit-image==0.19.2
+scipy==1.8.0
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch
+torchvision
+setuptools==59.5.0
+# List of new requirements needed for SampleNet
+pykeops==2.1
+seaborn==0.11.2
+tensorflow-gpu==2.9.1
+tensorflow-probability==0.17.0
+einops==0.4.1
+prettytable==3.3.0
+tqdm==4.64.0
+

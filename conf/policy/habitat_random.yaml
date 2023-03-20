@@ -1,0 +1,4 @@
+_target_: src.models.policies.habitat.Random
+goal_radius: 1.
+d_to_obstacle: .5
+limit: .17

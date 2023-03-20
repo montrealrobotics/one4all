@@ -1,0 +1,8 @@
+# Those parameters are added to lr_scheduler_config
+# See https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html?highlight=configure_optimizers#configure-optimizers 
+interval: epoch
+frequency: 1
+monitor: ${metric.optimized_metric}
+strict: false
+scheduler: ???
+name: null

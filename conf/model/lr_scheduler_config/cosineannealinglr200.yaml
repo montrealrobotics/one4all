@@ -1,0 +1,5 @@
+defaults:
+  - cosineannealinglr
+
+scheduler:
+  T_max: 200

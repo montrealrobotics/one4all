@@ -1,0 +1,19 @@
+# @package _global_
+
+defaults:
+  - sweep_local
+  - override /model/loss: ce_hinge
+
+model:
+  loss:
+    contrastive_loss:
+      speed_target: true
+      hinge_loss: true
+      loss: huber
+
+# Sweeper tweaks
+hydra:
+  sweeper:
+    params:  # Local-specific parameters
+      scale: choice(.25, .5)
+      model.loss.contrastive_loss.neg_d: choice(10.0, 15.0, 20.0)

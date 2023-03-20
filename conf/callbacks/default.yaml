@@ -1,0 +1,33 @@
+model_checkpoint:
+#  _target_: src.callbacks.ModelCheckpoint
+  _target_: src.utils.callbacks.ModelCheckpointWarmup
+  monitor: ${metric.optimized_metric}                              # name of the logged metric which determines when model is improving
+  mode: ${metric.min_max}                                      # "max" means higher metric value is better, can be also "min"
+  save_top_k: 1                                    # save k best models (determined by above metric)
+  save_last: True                                  # additionaly always save model from last epoch
+  verbose: False                                   # set callback verbose
+  dirpath: ${oc.env:SLURM_TMPDIR}/checkpoints/     # folder used to store checkpoints
+  filename: "epoch_{epoch:03d}"                    # filename of the model
+  auto_insert_metric_name: False
+  warmup: -1                                       # Warmup -1 is like having no warmup.
+  
+finetuning_callback:
+  _target_: src.utils.callbacks.FinetuneConnectivityHeadCallback
+  freeze_at_epoch: ${freeze_at_epoch}
+
+#early_stopping:
+#  _target_: pytorch_lightning.callbacks.EarlyStopping
+#  monitor: "val/acc"                       # name of the logged metric which determines when model is improving
+#  mode: "max"                              # "max" means higher metric value is better, can be also "min"
+#  patience: 100                            # how many validation epochs of not improving until training stops
+#  min_delta: 0                             # minimum change in the monitored metric needed to qualify as an improvement
+
+# Print fancy model summary
+model_summary:
+  _target_: pytorch_lightning.callbacks.RichModelSummary
+  max_depth: -1
+
+# This option is currently not working with comet logger
+# https://github.com/Lightning-AI/lightning/issues/11043
+#rich_progress_bar:
+#  _target_: pytorch_lightning.callbacks.RichProgressBar

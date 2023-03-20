@@ -1,0 +1,6 @@
+defaults:
+  - base
+
+_target_: torch.optim.Adam
+betas: [0.9, 0.999]  # Use list since OmegaConf does not parse tuples
+weight_decay: 0.0

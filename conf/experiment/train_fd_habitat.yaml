@@ -1,0 +1,15 @@
+# @package _global_
+
+# Config to train a global metric head locally
+defaults:
+  - train_fd_maze
+
+name: 'forward_dynamics_maze'
+
+datamodule:
+  k: 2
+  panorama: true
+
+model:
+  net:
+    maze_vector_map: false

@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  # Hydra's launcher API is synchronous and not async https://github.com/facebookresearch/hydra/issues/1377#issuecomment-773583397 so all jobs in a batch must finish before launching next batch
+  - override /hydra/launcher: submitit_local
+
+hydra:
+  launcher:
+    _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.LocalLauncher
+    submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+    timeout_min: 60
+    cpus_per_task: ${datamodule.num_workers}  # Workers are defined in datamodule
+    gpus_per_node: ${trainer.devices}         # Devices are defined in trainer
+    tasks_per_node: 1                         # num of tasks to spawn in each node (will repeat each task in a job array in each node)
+    mem_gb: 4                                 # RAM per node (not GPU memory) in GB
+    nodes: 1                                  # Number of nodes for job
+    name: ${hydra.job.name}                   # name of the job

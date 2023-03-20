@@ -1,0 +1,22 @@
+# @package _global_
+
+# Config to train a single model locally
+defaults:
+  - override /logger: null                                # Turn off comet logger
+  - override /launcher: null                                # Use default hydra launcher
+  - override /metric: val_loss
+
+name: ???
+
+epochs: 250
+
+# Logging
+model:
+  log_figure_every_n_epoch: 25
+trainer:
+  check_val_every_n_epoch: 1              # Check validation every n epochs
+
+# Checkpoints
+callbacks:
+  model_checkpoint:
+    dirpath: checkpoints/ # folder used to store checkpoints

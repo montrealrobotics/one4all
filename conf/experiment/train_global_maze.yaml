@@ -1,0 +1,31 @@
+# @package _global_
+
+# Config to train a global metric head locally
+defaults:
+  - train_base
+  - override /datamodule: global
+  - override /model: global
+  - override /model/net: global
+  - override /model/net@model.head: regressor
+  - override /model/optimizer: adam
+  - override /model/lr_scheduler_config: cycliclr
+
+name: 'geodesic_regressor_maze'
+
+# Model parameters
+model:
+  net:
+    n_layers: 3
+    activation: relu
+  head:
+    aggregation: delta
+    add_norm: false
+  optimizer:
+    lr: 0.005
+
+datamodule:
+  k: 1
+  panorama: false
+  drop_last: false
+  batch_size: 32
+  val_batch_size: 32

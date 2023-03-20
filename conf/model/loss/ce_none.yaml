@@ -1,0 +1,2 @@
+_target_: src.models.loss.CEConnectivity
+contrastive_loss: null

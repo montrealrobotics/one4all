@@ -1,0 +1,6 @@
+_target_: src.models.components.global_net.GlobalMetricHead
+emb_dim: ${local_emb_dim}                # Embedding dimension of local metric
+n_layers: 2                              # Number of layers of the model
+activation: relu                         # Activation function
+p_dropout: 0.0                           # Dropout probability
+normalize_input: false                   # Whether to normalize or not input to regressor

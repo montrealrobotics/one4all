@@ -1,0 +1,5 @@
+defaults:
+  - optimizer: adam
+  - lr_scheduler_config: null
+_target_: ???
+log_figure_every_n_epoch: 1

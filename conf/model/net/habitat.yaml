@@ -1,0 +1,14 @@
+_target_: src.models.components.local_net.LocalMetricHabitat
+emb_dim: 8                                # Embedding dimension of local metric
+k: ${datamodule.k}                        # Set in datamodule
+n_positives: ${datamodule.n_positives}    # Number of positives
+encoder_type: resnet                      # Set encoder type, options are resnet and cnn
+normalize_output: false                   # Standard scale the output with a batch norm layer
+bn_momentum: .1                           # Batch norm momentum. Set to 0.0 to disable batch norm.
+activation: "relu"                        # Possible activations functions [sigmoid, relu, tanh, leaky_relu, elu]
+predictor: "conv1d"                       # Type of predictor head [conv1d, transformer, mlp]
+# Transformer Params
+num_blocks: 2                             # Number of transformer (encoder) blocks
+dropout: 0.0                              # Dropout of transformer
+num_heads: 2                              # Number of heads in each transformer block
+use_cls: True                             # Whether to return the embedding of CLS token or anchor token

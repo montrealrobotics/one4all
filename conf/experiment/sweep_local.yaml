@@ -1,0 +1,53 @@
+# @package _global_
+
+defaults:
+  - sweep_base
+  - override /datamodule: local
+  - override /model: local
+  - override /model/net: habitat
+  - override /metric: val_f1_ssl
+
+# name of the run determines folder name in logs
+name: "local_metric_habitat"
+
+epochs: 2250
+freeze_at_epoch: 2000
+
+datamodule:
+  panorama: true
+  val_batch_size: 512
+  dt: 1
+  k: 2
+  h: 1
+  per_env_batches: false
+  negative_prob: false
+
+# Sweeper tweaks
+hydra:
+  sweeper:
+    params:  # Local-specific parameters
+      # Datamodule
+      datamodule.batch_size: choice(256, 512)
+      datamodule.aug_anchor: choice(false)
+      datamodule.augmentations: choice(false, augmented)
+      # Model connectivity head
+      model.connectivity_head.n_layers: choice(2, 4)
+      model.connectivity_head.aggregation: choice(concat, relative)
+      model.connectivity_head.add_norm: choice(false)
+      model.connectivity_head.normalize_input: choice(true)
+      # Model Net
+      model.step_every: choice(1)
+      model.net.emb_dim: choice(256)
+      model.net.normalize_output: choice(false)
+      model.net.predictor: choice(conv1d)
+      model.net.bn_momentum: choice(0.1)
+      model.net.num_blocks: choice(1)
+      model.net.num_heads: choice(8)
+      model.net.activation: choice(relu, leaky_relu)
+      model.net.dropout: choice(0.0)
+      # Loss
+      model.loss.alpha: choice(1.0)
+      # Optimizer
+      model/optimizer: choice(adam, adamw)
+      model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
+      model/lr_scheduler_config: choice(no_scheduler)

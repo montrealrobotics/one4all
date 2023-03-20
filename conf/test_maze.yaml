@@ -1,0 +1,44 @@
+defaults:
+  - _self_                                      # Override default config with derived ones
+  - env: umaze_local
+  - policy: nnsystem
+  - log_dir: default                       # set logging directory for hydra/logger
+
+  - experiment: null
+
+    # enable color logging
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
+# path to original working directory
+# hydra hijacks working directory by changing it to the new log directory
+# https://hydra.cc/docs/next/tutorials/basic/running_your_app/working_directory
+original_work_dir: ${hydra:runtime.cwd}
+
+# path to folder with data
+data_dir: ${original_work_dir}/data/
+
+# pretty print config at the start of the run using Rich library
+print_config: True
+# disable python warnings if they annoy you
+ignore_warnings: True
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 12345
+# default name for the experiment, determines logging folder path
+# (you can overwrite this name in experiment configs)
+name: test
+# Data environment. Used to interpolate the parameters of the models and datamodules
+environment: ???
+
+# Test parameters
+test_params:
+  n_trajectories: 200
+  max_n_steps: 50
+  sample_start: true
+
+gif_params:
+  name: false  # Set to false to avoid gif generation
+  failures: true  # Only include failures in the gif
+  score: false   # Add visualization for action probabilities and global metric score to gifs. Only works with forward generator
+  duration: .1  # Duration of each frame

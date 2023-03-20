@@ -1,0 +1,19 @@
+_target_: pytorch_lightning.Trainer
+
+devices: 1                              # Number og GPU deveices. Set to 0 if using cpu
+accelerator: gpu                        # [cpu, gpu, tpu]
+
+deterministic: True                     # Set deterministic to guarantee reproducibility in experiments
+min_epochs: 1                           # Minimum number of epochs
+max_epochs: ${epochs}                   # Max number of epochs used to run experiment
+
+check_val_every_n_epoch: 1              # Check validation every n epochs
+val_check_interval: 1.0
+accumulate_grad_batches: 1              # Accumulate batches before updating. Effectively increases batch size
+# overfit_batches: 1
+
+# number of validation steps to execute at the beginning of the training - sanity check
+# num_sanity_val_steps: 0
+
+# ckpt path
+resume_from_checkpoint: null            # Whether to resume training from checkpoint or not

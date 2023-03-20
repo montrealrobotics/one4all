@@ -1,0 +1,46 @@
+defaults:
+  - _self_                                      # Override default config with derived ones
+  - env: umaze_local
+  - datamodule: local
+  - model: local                                # model to be loaded - [local, global]
+  - callbacks: default                     # pytorch lighting callbacks
+  - logger: null                                # set logger, options are [null, comet]
+  - trainer: default                       # hyperparameters for trainer
+  - log_dir: default                       # set logging directory for hydra/logger
+  - metric: val_loss                       # set logging directory for hydra/logger
+
+  # config for hyperparameter optimization and launcher -- use it with --multirun flag
+  - hparams_search: optuna                       # optuna
+  - launcher: local                            # launcher used for the job, options are [remote, local, null]
+
+  # experiment configs allow for version control of specific configurations
+  # e.g. best hyperparameters for each combination of model and datamodule
+  - experiment: null
+
+    # enable color logging
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
+# path to original working directory
+# hydra hijacks working directory by changing it to the new log directory
+# https://hydra.cc/docs/next/tutorials/basic/running_your_app/working_directory
+original_work_dir: ${hydra:runtime.cwd}
+
+# path to folder with data
+data_dir: ${original_work_dir}/data/
+
+# pretty print config at the start of the run using Rich library
+print_config: True
+# disable python warnings if they annoy you
+ignore_warnings: True
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 12345
+# default name for the experiment, determines logging folder path
+# (you can overwrite this name in experiment configs)
+name: ???
+# Data environment. Used to interpolate the parameters of the models and datamodules
+environment: ???
+
+scale: -1
+freeze_at_epoch: -1

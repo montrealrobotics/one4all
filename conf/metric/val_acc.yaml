@@ -1,0 +1,3 @@
+optimized_metric: "val/acc"
+min_max: max  # Min or max the metric
+minimize_maximize: maximize  # Alias for above. Optuna requires this

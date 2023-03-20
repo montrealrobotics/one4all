@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+  - sweep_local_multienv
+
+# name of the run determines folder name in logs
+name: "local_metric_multi"
+
+# Training is slower
+epochs: 200
+freeze_at_epoch: 180
+
+datamodule:
+  per_env_batches: true
+  batch_size: 128
+
+# Sweeper tweaks
+hydra:
+  sweeper:
+    params:
+      model.step_every: choice(2, 4, 8)

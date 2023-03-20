@@ -1,0 +1,4 @@
+_target_: src.models.loss.CEConnectivity
+contrastive_loss:
+  _target_: src.models.loss.InfoNCE
+  tau: 0.2          # Temperature parameter

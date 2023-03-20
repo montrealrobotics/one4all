@@ -1,0 +1,28 @@
+# @package _global_
+
+defaults:
+  - override /logger: comet
+  - override /log_dir: default
+  - override /launcher: ???
+  - override /hparams_search: grid
+  - override /policy: ???
+
+name: nav
+
+sim_env: ???
+difficulty: ???
+
+test_params:
+  n_trajectories: 1000
+  max_steps: 500
+
+gif_params:
+  goal: False
+  topdown: False
+  log_n_first: 10   # Log ten first videos
+  top_down: true    # Viz topdown map
+  collisions: true  # Viz collisions
+
+
+# To sweep use the hydra CLI syntax with the basic sweeper
+# ~hparams_search sim_env=Annawan,Nicut,Cantwell,Eastville,Hambleton,Dunmor,Sodaville,Aloha difficulty=easy,medium,hard,very_hard

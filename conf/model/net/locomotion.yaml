@@ -1,0 +1,11 @@
+_target_: src.models.locomotion.LocomotionNet
+emb_dim: ${model.net.emb_dim}                   # Embedding dimension of local metric
+n_actions: ${n_actions}
+aggregation: concat
+add_norm: false
+n_layers: 2
+normalize_input: false
+bn_momentum: ${model.net.bn_momentum}
+activation: ${model.net.activation}
+p_dropout: ${model.net.dropout}
+

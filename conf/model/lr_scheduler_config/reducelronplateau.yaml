@@ -1,0 +1,10 @@
+defaults:
+  - base
+
+scheduler:
+  _partial_: true
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  factor: .5
+  patience: 10
+  mode: ${metric.min_max}
+  verbose: true

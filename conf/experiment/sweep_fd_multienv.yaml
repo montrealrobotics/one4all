@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - sweep_fd
+
+name: "forward_dynamics_multienv"
+
+epochs: 1000
+
+datamodule:
+  drop_last: true
+  per_env_batches: false
+  
+model:
+  log_figure_every_n_epoch: 50
+  step_every: 1

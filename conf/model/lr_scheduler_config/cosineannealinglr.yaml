@@ -1,0 +1,11 @@
+defaults:
+  - base
+
+interval: epoch
+
+scheduler:
+  _partial_: true
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  T_max: 100
+  eta_min: 1e-5
+  verbose: true

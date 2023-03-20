@@ -1,0 +1,43 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /datamodule: ???
+  - override /model: ???
+  - override /callbacks: default
+  - override /logger: comet
+  - override /trainer: default
+  - override /log_dir: default
+  - override /launcher: remote
+  - override /hparams_search: optuna
+  - override /metric: val_loss
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# name of the run determines folder name in logs
+name: ???
+
+# Sweeper tweaks
+epochs: 400
+hydra:
+  sweeper:
+    n_trials: 80
+    n_jobs: ${hydra.sweeper.n_trials}
+    params:
+      datamodule.batch_size: choice(128, 256)
+      trainer.accumulate_grad_batches: choice(1, 3, 5, 10)
+      model/optimizer: choice(adam, adamw)
+      model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
+      model/lr_scheduler_config: choice(no_scheduler, cosineannealinglr, cycliclr, reducelronplateau)
+
+# Logging
+model:
+  log_figure_every_n_epoch: 25
+
+trainer:
+  check_val_every_n_epoch: 1              # Check validation every n epochs
+  accumulate_grad_batches: 1
+

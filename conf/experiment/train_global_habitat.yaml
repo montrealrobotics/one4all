@@ -1,0 +1,11 @@
+# @package _global_
+
+# Config to train a global metric head locally
+defaults:
+  - train_global_maze
+
+name: 'geodesic_regressor_habitat'
+
+datamodule:
+  k: 2
+  panorama: true

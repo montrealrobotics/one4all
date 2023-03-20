@@ -1,0 +1,12 @@
+_target_: src.models.policies.o4a.One4All
+local_metric_path: ${checkpoints.backbone_path}        # Path to local checkpoint
+fd_path: ${checkpoints.fd_path}                        # Path to forward dynamics
+global_metric_path: ${checkpoints.gr_path}             # Path to global checkpoint
+att_factor: 1                                          # Multiplicative factor applied to positive potentials
+rep_factor: 1                                          # Multiplicative factor applied to repulsive potentials
+n_visited: 1000                                        # Size of the visite state buffer
+repulsor_radius: 2.5                                   # Radius of the repulsors in latent space
+collision_len: .5                                      # Length of the collision box
+collision_width: .17                                   # Half the width of the collision box
+collision_penalty: 10000                               # Collision penalty added to colliding actions
+stop_d_local: 3.5                                      # Stopping threshold applied to the local metric

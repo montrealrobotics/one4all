@@ -1,0 +1,6 @@
+defaults:
+  - base
+
+# Use this to sweep over the option 'no scheduler'
+# Optuna does not accept null in the choices it seems
+scheduler: null

@@ -1,0 +1,21 @@
+# @package _global_
+
+# Config to train a local metric locally
+defaults:
+  - train_base
+  - override /datamodule: local
+  - override /model: local
+  - override /model/net: maze
+  - override /model/loss: ce_hinge
+  - override /metric: val_f1_ssl
+
+name: 'local_backbone_maze'
+
+epochs: 100
+freeze_at_epoch: 90
+
+datamodule:
+  batch_size: 32
+  val_batch_size: 32
+  k: 1
+  drop_last: false

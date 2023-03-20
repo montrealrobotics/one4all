@@ -1,0 +1,14 @@
+_target_: src.models.loss.CEConnectivity
+alpha: 1.0           # Weighting term of contrastive loss
+contrastive_loss:
+  _target_: src.models.loss.HingeLoss
+  pos_d: 1.0           # Distance between positives
+  neg_d: 2.0           # Distance between negatives
+  rot_pos_d: 1.0       # Distance between positives
+  scale: ${scale}      # Value used to scale the loss and eps
+  tau: 1.0
+  loss: 'huber'        # Options are [l1, l2, huber]
+  # speed_target and margin are not used by standard formulation
+  speed_target: false   # Turn on speed target
+  margin: 1           # Margin used for speed target
+  hinge_loss: true

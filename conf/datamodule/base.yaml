@@ -1,0 +1,22 @@
+_target_: src.datamodule.dataset.O4ADataModule
+
+environment: ${environment}
+data_dir: ${data_dir}                                   # data_dir is specified in config.yaml
+environments: ${environments}                           # Name of training environment
+val_environments: ${val_environments}                   # Environments used for validation
+test_environments: ${test_environments}                 # Environments used for testing
+dt: 1                                                   # Gap between two observations
+k: ???                                                  # Context length i.e. number of frames to be stacked. Put this in env
+h: 1                                                    # Horizon or number of timesteps in the future where a positive can be picked
+batch_size: 512                                         # Train batch size
+val_batch_size: 384                                     # Ensures fair evaluation for contrastive terms even if we change batch_size
+resize: ${resize}                                       # Size to rescale input image
+num_workers: 8                                          # Number of workers to process data
+shuffle: True                                           # Shuffle examples in dataloader for training
+drop_last: True                                         # Drop last batch
+n_positives: ???                                        # 'temporal' temporal neighbors
+gt_radius: ???                                          # Radius to connect ground truth graph
+augmentations: false                                    # String describing data augmentations to use [augmented, shift, False]
+aug_anchor: false                                       # Flag to augment anchor twice to enforce zero distant constraint
+panorama: ???                                           # Flag to use panorama images
+negative_prob: 0.00

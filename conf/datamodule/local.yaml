@@ -1,0 +1,13 @@
+defaults:
+  - base
+
+n_positives: 'temporal'                                 # 'temporal' temporal neighbors 0.262
+gt_radius: ??? # [pos, radius] [1.0, 1.571]  # [0.21, 0.262]. Put this in env
+per_env_batches: false
+augmentations: false
+aug_anchor: false
+k: 2
+panorama: true                                         # Realistic batch size for local metric - habitat
+drop_last: false
+batch_size: 128                                         # Realistic batch size for local metric - habitat
+val_batch_size: 128

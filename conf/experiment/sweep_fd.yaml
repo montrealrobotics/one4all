@@ -1,0 +1,47 @@
+# @package _global_
+
+defaults:
+  - sweep_base
+  - override /datamodule: fd
+  - override /model: fd
+  - override /model/loss: mse
+  - override /metric: val_loss
+
+# name of the run determines folder name in logs
+name: "forward_dynamics"
+
+epochs: 1000
+
+datamodule:
+  panorama: true
+  k: 2
+  drop_last: false
+  val_batch_size: 512
+
+# Local backbone and global head
+model:
+  step_every: 1
+  log_figure_every: 25
+  net:
+    emb_dim: ${local_emb_dim}           # Embedding dimension of local metric
+
+# Sweeper tweaks
+hydra:
+  sweeper:
+    direction: minimize
+    params:
+      # Model tweaks
+      model.noise: choice(0, 1e-3, 1e-2, 1e-1)
+      model.net.n_layers: choice(2, 4, 8)
+      model.net.activation: choice(relu, leaky_relu)
+      model.net.p_dropout: choice(0.0)
+      model.net.normalize_input: choice(true)
+      # Optimizer
+      model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
+      model/lr_scheduler_config: choice(no_scheduler)
+      # Datamodule
+      datamodule.per_env_batches: choice(false)
+      datamodule.batch_size: choice(256, 512)
+      datamodule.augmentations: choice(false, augmented)
+      # Trainer
+      model/optimizer: choice(adam, adamw)
