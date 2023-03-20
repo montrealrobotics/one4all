@@ -79,7 +79,7 @@ In this section, we will go over how to generate data, train O4A and navigate th
 to skip training and download trained checkpoints from [here](https://drive.google.com/file/d/1DUFptg6R2xUbTtzIRpIyIJnHECFvIOr5/view?usp=sharing).
 ## Generating data
 We'll use the Habitat simulator for data generation and navigation. You first need to download the relevant scenes 
-(at least Annawan) from the official [https://github.com/StanfordVL/GibsonEnv/blob/master/gibson/data/README.md#download-gibson-database-of-spaces](Gibson repositiory). 
+(at least Annawan) from the official (https://github.com/StanfordVL/GibsonEnv/blob/master/gibson/data/README.md#download-gibson-database-of-spaces)[Gibson repositiory]. 
 Make sure to put the relevant ```.glb``` and ```.navmesh``` files under the 
 ```data_habitat/versioned_data/habitat_test_scenes_1.0``` directory. 
 
