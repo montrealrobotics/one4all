@@ -123,7 +123,7 @@ previously trained *Local Backbone*.
 Finally, the geodesic regressor is trained by running:
 
 ```bash
-python3 train.py experiment=train_global_habitat env=habitat epochs=5 datamodule.drop_last=false
+python3 train.py experiment=train_geodesic_habitat env=habitat epochs=5 datamodule.drop_last=false
 ```
 
 Where the `datamodule.drop_last=false` ensures we work with all the states in our dataset.

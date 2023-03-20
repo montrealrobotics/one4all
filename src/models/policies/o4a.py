@@ -33,8 +33,8 @@ class One4All(BaseModel):
 
 
         Args:
-            local_metric_path: Path to local metric checkpoint.
-            global_metric_path:  Path to global metric checkpoint. Trained over local codes.
+            backbone_path: Path to local metric checkpoint.
+            gr_path:  Path to global metric checkpoint. Trained over local codes.
             fd_path: Path to forward dynamics network. Trained over local codes.
             transform: Transforms to be applied to the images before passing them to the models.
             att_factor: Scaling factor applied to the attractive force to the goal.
@@ -49,10 +49,10 @@ class One4All(BaseModel):
             stop_d_local: Agent calls stop if local distance to goal is < stop_d_local.
     """
 
-    def __init__(self, local_metric_path:str, global_metric_path:str=None, fd_path:str=None,
-                 transform=None, att_factor:float=1., rep_factor:float=1., repulsor_radius:float=1.1, n_visited:int=10,
-                 collision_len: float = .26, collision_width: float = .1, collision_penalty:float=10.,
-                 stop_d_local:float=0.):
+    def __init__(self, backbone_path: str, gr_path: str = None, fd_path: str = None,
+                 transform=None, att_factor: float = 1., rep_factor: float = 1., repulsor_radius: float = 1.1,
+                 n_visited: int = 10, collision_len: float = .26, collision_width: float = .1,
+                 collision_penalty: float = 10., stop_d_local: float = 0.):
         """Init."""
         super().__init__()
         self.transform = transform
@@ -155,13 +155,13 @@ class One4All(BaseModel):
         self.state_local, self.goal_local = local_codes[0].unsqueeze(0), local_codes[1].unsqueeze(0)
 
         # Compute global embeddings if global head is detected
-        if self.global_head is not None:
-            global_codes = self.global_head(local_codes)
+        if self.geodesic_regressor is not None:
+            global_codes = self.geodesic_regressor(local_codes)
             self.state_global, self.goal_global = global_codes[0].unsqueeze(0), global_codes[1].unsqueeze(0)
 
         # Compute distances to goal
-        if self.global_head is not None:
-            self.d_to_goal_global = self.global_head.head(
+        if self.geodesic_regressor is not None:
+            self.d_to_goal_global = self.geodesic_regressor.head(
                 self.state_global.float(),
                 self.goal_global.float(),
             ).double().squeeze()
@@ -192,7 +192,6 @@ class One4All(BaseModel):
         y = range_scan * np.sin(bearing_scan)
         measurement_mask = (np.abs(y) < self.collision_width) & (x > .00) & (x < self.collision_len)
 
-
         # Populate forward action with collision probability
         if measurement_mask.any():
             self.collision_probs[0] = 1.0
@@ -206,7 +205,6 @@ class One4All(BaseModel):
         # Keep buffer at most
         if len(self.visited_states) > self.hparams.n_visited:
             self.visited_states = self.visited_states[1:]
-
 
     def reset_visited_states(self):
         """Reset buffer of visited states if goal is new"""
@@ -223,7 +221,6 @@ class One4All(BaseModel):
 
         # Save new goal
         self.prev_goal = goal
-
 
     def update_state(self, x_current: np.ndarray, x_goal: np.ndarray, scan: np.ndarray) -> None:
         """Update all attributes given new input."""
@@ -243,14 +240,13 @@ class One4All(BaseModel):
         self.update_waypoints_actions()
 
         # Push waypoints in global space
-        if self.global_head is not None:
-            self.waypoints_global = self.global_head(self.waypoints_local)
-
+        if self.geodesic_regressor is not None:
+            self.waypoints_global = self.geodesic_regressor(self.waypoints_local)
 
     def compute_attractive_potentials(self) -> torch.Tensor:
         """Attractor to goal in global space."""
         # Global planning using geodesic distances
-        potentials = self.global_head.head.forward_all_codes(
+        potentials = self.geodesic_regressor.head.forward_all_codes(
             self.waypoints_global.float(),
             self.get_goal().float(),
             deployment=True
@@ -302,13 +298,11 @@ class One4All(BaseModel):
             print("Calling STOP because goal is reachable.")
             return True
 
-
         if self.d_to_goal_local < self.hparams.stop_d_local:
             print(f"Calling STOP because local distance is under {self.hparams.stop_d_local}.")
             return True
 
         return False
-
 
     def get_action(self, x_current: np.ndarray, x_goal: np.ndarray, prev_reward: int,
                    position: np.ndarray = None, scan: np.ndarray = None) -> int:

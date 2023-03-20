@@ -4,7 +4,7 @@ from torch import nn as nn
 from src.models.components import LinearBlock, activation_function, compute_input
 
 
-class LocomotionNet(pl.LightningModule):
+class ConnectivityHead(pl.LightningModule):
     """
     Policy implementation (imitation learning) to navigate Maze/Habitat environment
 

@@ -46,17 +46,17 @@ class BaseModel(pl.LightningModule):
         """Set up backbone and geodesic regressor."""
 
         # Load actual backbone for training
-        if 'local_metric_path' in self.hparams:
-            from src.models.local_metric import LocalMetric
-            self.backbone = LocalMetric.load_from_checkpoint(self.hparams.local_metric_path)
+        if 'backbone_path' in self.hparams:
+            from src.models.local_backbone import LocalBackbone
+            self.backbone = LocalBackbone.load_from_checkpoint(self.hparams.backbone_path)
             if self.freeze_backbone:
                 self.backbone.freeze()
 
         # Optional global head for better visualizations
-        if 'global_metric_path' in self.hparams and self.hparams.global_metric_path is not None:
-            from src.models.global_metric import GlobalMetric
-            self.global_head = GlobalMetric.load_from_checkpoint(self.hparams.global_metric_path, strict=False)
-            self.global_head.freeze()
+        if 'gr_path' in self.hparams and self.hparams.gr_path is not None:
+            from src.models.geodesic_regressor import GeodesicRegressor
+            self.geodesic_regressor = GeodesicRegressor.load_from_checkpoint(self.hparams.gr_path, strict=False)
+            self.geodesic_regressor.freeze()
 
     def fetch_environment(self, stage: str, dataloader_idx: int) -> str:
         """

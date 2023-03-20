@@ -2,9 +2,9 @@
 
 defaults:
   - sweep_base
-  - override /datamodule: global
-  - override /model: global
-  - override /model/net: global
+  - override /datamodule: geodesic
+  - override /model: geodesic
+  - override /model/net: geodesic
   - override /model/net@model.head: regressor
   - override /metric: val_loss
 

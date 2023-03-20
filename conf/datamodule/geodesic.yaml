@@ -2,7 +2,7 @@ defaults:
   - base
 
 n_positives: 1                                          # Use single positives
-local_metric_path: ${checkpoints.backbone_path}
+backbone_path: ${checkpoints.backbone_path}
 any_positive: true
 compute_geodesics: true
 drop_last: false

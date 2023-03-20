@@ -20,23 +20,20 @@ from src.utils import get_logger
 log = get_logger(__name__)
 
 
-class LocalMetric(BaseModel):
+class LocalBackbone(BaseModel):
     """
-    Local metric network implementation for a Maze/Habitat/JAckal Environment.
+    Local backbone network implementation for a Maze/Habitat/JAckal Environment.
 
         Args:
-            net: Local Metric (Backbone) for Maze or Jackal.
+            net: Local Backbone for Maze or Jackal.
             connectivity_head: Net used for predicting connectivity + actions.
             loss: Loss function, options are CEConnectivity or HingedLoss
             optimizer: functools partial torch.optim optimizer with all arguments except
             model parameters. Please refer to the Hydra doc for partially initialized modules.
-            eps: (NOT USED) Maximum distance value to have a loop-closure
             n_samples: Number of false positives edges used to plot
             rho: Min distance to consider an edge spurious
-            scale: (NOT USED) Scale the eps by this factor
-            n_edges: Number of edges to sample while plotting connectivity graph. Note: Only used for 
+            n_edges: Number of edges to sample while plotting connectivity graph. Note: Only used for
             monitoring/research - not used by the actual O4A model
-            low_eps: (NOT USED) Minimum distance value to have a loop-closure
             log_figure_every_n_epoch: Frequency at which figures should be logged. The counter only increases when
             validation_epoch_end is called
             val_loss: Validation Loss function, options are CEConnectivity or HingedLoss. Is False, use same as loss.
@@ -51,17 +48,14 @@ class LocalMetric(BaseModel):
                  connectivity_head: pl.LightningModule,
                  loss: Union[CEConnectivity, HingeLoss],
                  optimizer: functools.partial,
-                 eps: float,
                  n_samples: int,
                  rho: float,
-                 scale: Union[float, int],
                  n_edges: int,
-                 low_eps: float = 0,
                  log_figure_every_n_epoch: int = 1,
                  val_loss: Union[CEConnectivity, HingeLoss, None] = None,
                  lr_scheduler_config: Dict = None,
                  step_every: int = 4):
-        super(LocalMetric, self).__init__()
+        super(LocalBackbone, self).__init__()
 
         # This line allows to access init params with 'self.hparams' attribute
         # it also ensures init params will be stored in ckpt
@@ -90,7 +84,7 @@ class LocalMetric(BaseModel):
                                                                                    torch.Tensor,
                                                                                    torch.Tensor]:
         """
-        Local metric forward method
+        Local backbone forward method
 
         Args:
             x_anchor: Batch of sequence of images (anchors) [B, S, C, H, W]
@@ -101,7 +95,7 @@ class LocalMetric(BaseModel):
             Embedding representation of positives [B, D]
             Embedding representation of each anchor in the sequence (backbone) [B, K, D]
         """
-        # Forward through Local metric network
+        # Forward through Local backbone network
         p_anchor, p_pos = self.net.forward(x_anchor, x_pos)
 
         if p_pos is not None:
@@ -277,7 +271,7 @@ class LocalMetric(BaseModel):
     def _shared_loss_computation(self, batch: Dict[str, torch.Tensor], loss: HingeLoss) \
             -> Tuple[Dict[str, torch.Tensor], torch.Tensor, torch.Tensor]:
         """
-        Compute loss for the local metric network
+        Compute loss for the local backbone network
 
         Args:
             batch: Either train or validation batch
@@ -390,7 +384,7 @@ class LocalMetric(BaseModel):
                             ids: np.ndarray,
                             number_gt_edges: int) -> object:
         """
-        Update the graph edges based on current local metric estimate and plot the graph.
+        Update the graph edges based on current local backbone estimate and plot the graph.
         Note: Method used for monitoring performance of the local backbone
 
         Args:

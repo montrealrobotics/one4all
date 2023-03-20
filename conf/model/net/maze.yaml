@@ -1,4 +1,4 @@
-_target_: src.models.components.local_net.LocalMetricMaze
+_target_: src.models.components.local_nets.LocalBackboneMaze
 emb_dim: ${local_emb_dim}                   # Embedding dimension of local metric
 k: ${datamodule.k}           # Set in datamodule
 norm: false                  # Normalize output to norm 1

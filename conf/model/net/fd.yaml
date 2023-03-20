@@ -1,9 +1,7 @@
 _target_: src.models.forward_dynamics.ForwardDynamics
 emb_dim: ${local_emb_dim}                   # Embedding dimension of local metric
 n_actions: ${n_actions}                     # Size of the output.
-bias_sampler: false
 n_layers: 3                                 # Number of hidden layers
 maze_vector_map: false
 activation: relu                            # Activation function
-p_dropout: 0.0                              # Dropout probability
 normalize_input: false                      # Whether to normalize or not input to regressor
