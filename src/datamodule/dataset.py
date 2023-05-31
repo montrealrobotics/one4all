@@ -26,7 +26,7 @@ from albumentations.pytorch import ToTensorV2
 
 from src.datamodule import save_graph, load_graph, remove_attributes, get_aug_keys
 
-from src.models.local_metric import LocalMetric
+from src.models.local_backbone import LocalBackbone
 from src.utils.rotations import Quaternion
 from src.utils.se2 import SE2, ExpSE2
 from src.utils import get_logger
@@ -746,7 +746,7 @@ class O4ADataModule(pl.LightningDataModule):
             :param any_positive: Ignore graph structure and sample any other sample as a positive
             :param gt_radius: Radius to connect ground truth samples. First position is position second is orientation -
             Note: Only used for monitoring/research - not used by the actual O4A model
-            :param local_metric_path: List of paths to trained local metrics checkpoint. If provided, used
+            :param backbone_path: List of paths to trained local metrics checkpoint. If provided, used
             to update the graph during the setup phase
             :param compute_geodesics: Compute geodesic targets for global training
             :param per_env_batches: Make sure a given batch comes from a single environment. Useulf for local metric
@@ -776,7 +776,7 @@ class O4ADataModule(pl.LightningDataModule):
             n_positives: Union[str, int] = 'temporal',
             any_positive: bool = False,
             gt_radius: List[float] = [np.sqrt(2) + 0.01, 0.262],
-            local_metric_path: List[str] = None,
+            backbone_path: List[str] = None,
             compute_geodesics: bool = False,
             per_env_batches: bool = False,
             augmentations: Union[bool, str] = False,
@@ -814,7 +814,7 @@ class O4ADataModule(pl.LightningDataModule):
         # Never use transforms for validation
         self.val_transform = get_transforms(resolution=self.hparams.resize, keys=keys)
 
-    def _loop_closure(self, dataset: Dataset, dataloader: DataLoader, local_metric_path):
+    def _loop_closure(self, dataset: Dataset, dataloader: DataLoader, backbone_path):
 
         # Back up transforms and use no transforms for embedding
         transforms = dataset.transforms  # Backup transforms
@@ -823,7 +823,7 @@ class O4ADataModule(pl.LightningDataModule):
         dataset.transforms = self.val_transform
 
         # Inference
-        model = LocalMetric.load_from_checkpoint(local_metric_path)
+        model = LocalBackbone.load_from_checkpoint(backbone_path)
         model.freeze()
         model.eval()
         trainer = pl.Trainer(accelerator='auto')
@@ -861,8 +861,8 @@ class O4ADataModule(pl.LightningDataModule):
                               aug_anchor=self.hparams.aug_anchor if split == 'train' else False,
                               panorama=self.hparams.panorama)
 
-        # Loop closure in train set if local_metric_path is provided
-        if self.hparams.local_metric_path is not None:
+        # Loop closure in train set if backbone_path is provided
+        if self.hparams.backbone_path is not None:
             self._loop_closure(current_set,
                                DataLoader(
                                    current_set,
@@ -870,7 +870,7 @@ class O4ADataModule(pl.LightningDataModule):
                                    drop_last=self.hparams.drop_last,
                                    shuffle=self.hparams.shuffle,
                                    num_workers=self.hparams.num_workers),
-                               self.hparams.local_metric_path)
+                               self.hparams.backbone_path)
 
         # Compute global network target
         if self.hparams.compute_geodesics:

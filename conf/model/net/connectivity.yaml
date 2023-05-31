@@ -1,4 +1,4 @@
-_target_: src.models.locomotion.LocomotionNet
+_target_: src.models.components.connectivity.ConnectivityHead
 emb_dim: ${model.net.emb_dim}                   # Embedding dimension of local metric
 n_actions: ${n_actions}
 aggregation: concat

@@ -9,7 +9,7 @@ import comet_ml
 from pytorch_lightning import LightningDataModule, LightningModule, Callback, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
 
-from src.models.local_metric import LocalMetric
+from src.models.local_backbone import LocalBackbone
 from src import utils
 
 log = utils.get_logger(__name__)

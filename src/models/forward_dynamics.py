@@ -17,15 +17,13 @@ class ForwardDynamics(pl.LightningModule):
         Args:
             emb_dim: Embedding dimension of the input. Should be the output of the local metric model.
             n_actions: Size of the output space (number of actions).
-            bias_sampler: (NOT USED) legacy code
             n_layers: Number of hidden layers to include in the networks.
             maze_vector_map: Encode actions as 2D directions instead of one hot actions.
             activation: Activation function for the model
-            p_dropout: (NOT USED) Dropout probability
             normalize_input: Whether to normalize input before being feed to the model
     """
 
-    def __init__(self, emb_dim: int, n_actions: int, bias_sampler: bool = False, n_layers: int = 2,
+    def __init__(self, emb_dim: int, n_actions: int, n_layers: int = 2,
                  maze_vector_map: bool = False, activation: str = 'relu', p_dropout: float = 0.0,
                  normalize_input: bool = False):
 
@@ -36,7 +34,6 @@ class ForwardDynamics(pl.LightningModule):
         self.n_actions = n_actions - 2
         self.maze_vector_map = maze_vector_map
         self.activation = activation_function(activation)
-        self.p_dropout = p_dropout
 
         # Build forward dynamics
         # Takes as input the anchor code + one hot representation of the action
@@ -118,9 +115,7 @@ class ForwardDynamicsHead(BaseModel):
             lr_scheduler_config: lr_scheduler_config dict. Please refer to pytorch lightning doc.
             model parameters. Please refer to the Hydra doc for partially initialized modules.
             log_figure_every_n_epoch: Frequency at which figures should be logged. Ignored.
-            entropy_regularization: (NOT USED) legacy code
-            local_metric_path: Path to trained local_metric checkpoint. Will be used as the backbone.
-            locomotion_path: (NOT USED) Path to trained locomotion network to label anchor-positive pairs.
+            backbone_path: Path to trained local_metric checkpoint. Will be used as the backbone.
             noise: Gaussian noise added to input during training.
             step_every: Number of environment batches to forward before calling an optimizer step. Useful when using
             per_env_batches and a "batch" consists of a large number of environment batches
@@ -133,9 +128,7 @@ class ForwardDynamicsHead(BaseModel):
                  loss: nn.MSELoss,
                  lr_scheduler_config: Dict = None,
                  log_figure_every_n_epoch: int = 1,
-                 entropy_regularization: bool = True,
-                 local_metric_path: str = None,
-                 locomotion_path: str = None,
+                 backbone_path: str = None,
                  noise: float = 0.0,
                  step_every: int = 4):
         super(ForwardDynamicsHead, self).__init__()
@@ -153,7 +146,7 @@ class ForwardDynamicsHead(BaseModel):
 
     def forward(self, x_anchor: torch.Tensor, actions: Optional[torch.Tensor]) -> torch.Tensor:
         """
-        Forward Method for CVAE
+        Forward Method for FD
 
         Args:
             x_anchor: Embedding representation of an anchor
@@ -259,7 +252,7 @@ class ForwardDynamicsHead(BaseModel):
     def _shared_loss_computation(self,
                                  batch: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, float]]:
         """
-        Compute loss for the local metric network
+        Compute loss for the FD network
 
         Args:
             batch: Either train or validation batch

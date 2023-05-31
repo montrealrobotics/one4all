@@ -4,8 +4,10 @@ from habitat.tasks.nav.shortest_path_follower import ShortestPathFollower
 
 from src.models.policies.base_policy import Policy
 
+
 class Random(Policy):
     """Random policy with proper collision checking and oracle stopping."""
+
     def __init__(self, goal_radius, limit, d_to_obstacle, random_state=42):
         self.rng = np.random.default_rng(random_state)
         self.goal_radius = goal_radius
@@ -37,7 +39,6 @@ class Random(Policy):
         y = range_scan * np.sin(bearing_scan)
         measurement_mask = (np.abs(y) < self.limit) & (x > .00) & (x < self.d_to_obstacle)
 
-
         # Populate forward action with collision probability
         if measurement_mask.any():
             self.collision_probs[0] = 1.0
@@ -61,6 +62,8 @@ class Random(Policy):
 
         # Return random action
         return self.rng.choice(actions)
+
+
 class ShortestPathPolicy(Policy):
     def __init__(self, goal_radius, random_p=0.0, random_state=42):
         self.random_p = random_p
@@ -83,4 +86,3 @@ class ShortestPathPolicy(Policy):
         else:
             # Return best action
             return self.follower.get_next_action(position)
-

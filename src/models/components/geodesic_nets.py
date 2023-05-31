@@ -5,21 +5,20 @@ import pytorch_lightning as pl
 from src.models.components import activation_function, LinearBlock, compute_input
 
 
-class GlobalMetricHead(pl.LightningModule):
+class GeodesicBackbone(pl.LightningModule):
     """
-    Global metric head to chain with the local metric backbone
+    Geodesic regressor backbone to chain with the local backbone
 
     Args:
         emb_dim: Embedding dimension of the output
         n_layers: Number of layers to use for this model
-        aggregation: (NOT USED) Type of aggregation 
-        activation: (NOT USED) Activation function
-        p_dropout: (NOT USED) Dropout probability
+        activation: Activation function
+        p_dropout: Dropout probability
         normalize_input: whether to normalize codes before feeding it into the model or not
     """
 
-    def __init__(self, emb_dim: int = 2, n_layers: int = 4, aggregation: str = 'concat',
-                 activation: str = 'relu', p_dropout: float = 0.0, normalize_input: bool = False):
+    def __init__(self, emb_dim: int = 2, n_layers: int = 4, activation: str = 'relu',
+                 p_dropout: float = 0.0, normalize_input: bool = False):
         super().__init__()
 
         # Embedding dimension of the model
@@ -47,20 +46,20 @@ class GlobalMetricHead(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Global metric forward method
+        Geodesic regressor's backbone forward method
 
         Args:
             x: Batch of latent codes in local backbone space.
 
         Returns:
-            Global latent codes
+            Geodesic latent codes
         """
         return self.head(x)
 
 
 class RegressionHead(pl.LightningModule):
     """
-    Regression head to estimate heuristic for global metric - this transforms geodesic regressor or (global) in a 
+    Regression head to estimate heuristic for geodesic regressor - this transforms geodesic regressor or (global) in a
     `quasi metric` as it is not symmetric.
 
     Args:
@@ -115,8 +114,8 @@ class RegressionHead(pl.LightningModule):
         Forward method
 
         Args:
-            anchor_codes: global anchor code
-            positive_codes: global positive code
+            anchor_codes: geodesic anchor code
+            positive_codes: geodesic positive code
 
         Returns:
             Geodesic distance estimate between anchor and positive

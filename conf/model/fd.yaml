@@ -4,7 +4,6 @@ defaults:
   - loss: mse
 
 _target_: src.models.forward_dynamics.ForwardDynamicsHead
-local_metric_path: ${checkpoints.backbone_path}      # Path to trained local checkpoint
-#locomotion_path: ${locomotion_path}      # Path to trained local checkpoint
+backbone_path: ${checkpoints.backbone_path}      # Path to trained local checkpoint
 noise: 0.0
 step_every: 1

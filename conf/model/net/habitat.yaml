@@ -1,8 +1,7 @@
-_target_: src.models.components.local_net.LocalMetricHabitat
-emb_dim: 8                                # Embedding dimension of local metric
+_target_: src.models.components.local_nets.LocalBackboneHabitat
+emb_dim: ${local_emb_dim}                 # Embedding dimension of local metric
 k: ${datamodule.k}                        # Set in datamodule
 n_positives: ${datamodule.n_positives}    # Number of positives
-encoder_type: resnet                      # Set encoder type, options are resnet and cnn
 normalize_output: false                   # Standard scale the output with a batch norm layer
 bn_momentum: .1                           # Batch norm momentum. Set to 0.0 to disable batch norm.
 activation: "relu"                        # Possible activations functions [sigmoid, relu, tanh, leaky_relu, elu]
