@@ -506,34 +506,34 @@ class LocalBackbone(BaseModel):
                 logits = self.connectivity_head(anchor.float(), anchors.float())
                 actions = logits.argmax(dim=1)
 
-        # Use this to get geodesic for forward move, rotation, etc.
-        weights = weights.cpu().numpy()
-        actions = actions.cpu().numpy()
-        counter['closures'] += (actions > 0).sum()
+            # Use this to get geodesic for forward move, rotation, etc.
+            weights = weights.cpu().numpy()
+            actions = actions.cpu().numpy()
+            counter['closures'] += (actions > 0).sum()
 
-        if update:
-            # If updating graph, add back transition edges from the original graph of chains
-            # We only do so if the model predicted not connected for that edge
-            for i_r, r in enumerate(index):
-                for i_c, c in enumerate(indices):
-                    if dataset.graph.has_edge(c, r):
-                        # Replace predicted action in graph with GT action
-                        # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
-                        actions[i_r, i_c] = dataset.graph.edges[c, r]['action'][0]
-                        if actions[i_r, i_c] == 0:
-                            # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
-                            counter["transitions"] += 1
+            if update:
+                # If updating graph, add back transition edges from the original graph of chains
+                # We only do so if the model predicted not connected for that edge
+                for i_r, r in enumerate(index):
+                    for i_c, c in enumerate(indices):
+                        if dataset.graph.has_edge(c, r):
+                            # Replace predicted action in graph with GT action
+                            # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
+                            actions[i_r, i_c] = dataset.graph.edges[c, r]['action'][0]
+                            if actions[i_r, i_c] == 0:
+                                # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
+                                counter["transitions"] += 1
 
 
-        # Extract selected edges + weight and add to list of edges
-        if actions.any():
-            columns = np.nonzero(actions)[0]  # 0 is disconnected
-            weights = weights[columns]
-            actions = actions[columns]
-            batch_edges = [(index, indices[c], {'weight': w, 'action': a}) for c, w, a in zip(columns,
-                                                                                              weights,
-                                                                                              actions)]
-            edges.extend(batch_edges)
+            # Extract selected edges + weight and add to list of edges
+            if actions.any():
+                columns = np.nonzero(actions)[0]  # 0 is disconnected
+                weights = weights[columns]
+                actions = actions[columns]
+                batch_edges = [(index, indices[c], {'weight': w, 'action': a}) for c, w, a in zip(columns,
+                                                                                                  weights,
+                                                                                                  actions)]
+                edges.extend(batch_edges)
 
         log.info('Edges successfully computed')
         log.info(f'Transition edges   : {counter["transitions"]}')
