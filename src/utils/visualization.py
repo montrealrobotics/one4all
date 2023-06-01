@@ -386,5 +386,5 @@ def data_gif(path: str, gif_path: str = 'movie.gif', agent_name: str = 'Agent', 
             image = imageio.imread(filename)
             writer.append_data(image)
     # Remove temp gif factory
-    # if os.path.exists(temp_path):
-    #     shutil.rmtree(temp_path)
+    if os.path.exists(temp_path):
+        shutil.rmtree(temp_path)
