@@ -10,7 +10,7 @@ import numpy as np
 from src import utils
 from src.datamodule.maze import sample_maze_trajectories, get_maze_env
 from src.datamodule.dataset import get_transforms
-from src.models.policies.policies import Dijkstra
+from src.models.policies.maze import Dijkstra
 from src.utils.eval_metrics import spl
 from src.utils.visualization import data_gif
 
@@ -44,7 +44,12 @@ def test_maze(cfg: DictConfig) -> Optional[float]:
     # Agent benchmark
     env = get_maze_env(maze_name=environment_name)
     agent_policy = hydra.utils.instantiate(cfg.policy)
-    agent_policy.transform = get_transforms(resolution=cfg.resize, env=cfg.environment)
+    agent_policy.transform = get_transforms(resolution=cfg.resize)
+    if hasattr(agent_policy, "is_oracle") and agent_policy.is_oracle:
+        agent_policy.setup_sim(env)
+
+
+    # Run simulation
     success, steps = sample_maze_trajectories(env, agent_policy,
                                               n_trajectories=cfg.test_params.n_trajectories,
                                               max_n_steps=cfg.test_params.max_n_steps,
@@ -80,8 +85,8 @@ def test_maze(cfg: DictConfig) -> Optional[float]:
         success = success if cfg.gif_params.failures else None
 
         if success is None or not success.all():
-            data_gif(path, os.path.join('gifs', cfg.gif_params.name + '.gif'),
-                     cfg.policy._target_, success=success, duration=cfg.gif_params.duration)
+            data_gif(path, os.path.join('gifs', cfg.gif_params.name + '.mp4'),
+                     cfg.policy._target_, success=success, duration=cfg.gif_params.duration, make_top_down=False)
 
         # Delete generated data
         shutil.rmtree(path)

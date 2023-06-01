@@ -39,6 +39,6 @@ test_params:
 
 gif_params:
   name: false  # Set to false to avoid gif generation
-  failures: true  # Only include failures in the gif
+  failures: false  # Only include failures in the gif
   score: false   # Add visualization for action probabilities and global metric score to gifs. Only works with forward generator
   duration: .1  # Duration of each frame

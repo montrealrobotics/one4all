@@ -301,7 +301,7 @@ def plot_connectivity_graph(graph: nx.Graph, environment: str = 'maze',
 
 
 def data_gif(path: str, gif_path: str = 'movie.gif', agent_name: str = 'Agent', frame_skip: int = 1,
-             duration: float = .1, success: np.ndarray = None, make_top_down: bool = False):
+             duration: float = .1, success: np.ndarray = None, make_top_down: bool = True):
     """Take a datamodule folder produced by sample_maze_trajectories and generate a gif with all frames.
 
     Args:
@@ -335,26 +335,37 @@ def data_gif(path: str, gif_path: str = 'movie.gif', agent_name: str = 'Agent', 
         # Goal image
         traj_str = f'traj_{traj}'
         img_goal = np.asarray(Image.open(os.path.join(path, traj_str, 'goal.png')).convert("RGB"))
-        img_goal = Image.fromarray(np.split(img_goal, 2, 1)[0])
+        if make_top_down:
+            img_goal = Image.fromarray(np.split(img_goal, 2, 1)[0])
 
         n_images = len(os.listdir(os.path.join(path, traj_str, 'images')))
         for n in range(0, n_images, frame_skip):
             img_current = Image.open(os.path.join(path, traj_str, 'images', f'{n}.png')).convert("RGB")
 
-            fig, axes = plt.subplots(1, 3, figsize=(12.0, 4.0))
+            if make_top_down:
+                fig, axes = plt.subplots(1, 3, figsize=(12.0, 4.0))
+            else:
+                fig, axes = plt.subplots(1, 2, figsize=(8.0, 4.0))
+
             for a in axes:
                 a.set_xticks([])
                 a.set_yticks([])
             axes[0].imshow(img_current)
             axes[0].axis('off')
             axes[0].set_title(agent_name)
-            top_down = Image.open(os.path.join(path, traj_str, 'top_down', f'{n}.png')).convert("RGB")
-            axes[1].imshow(top_down)
-            axes[1].set_title(f'Top down - Trajectory {traj + 1}')
-            axes[1].axis('off')
-            axes[2].imshow(img_goal)
-            axes[2].set_title(f'Goal')
-            axes[2].axis('off')
+
+            if make_top_down:
+                top_down = Image.open(os.path.join(path, traj_str, 'top_down', f'{n}.png')).convert("RGB")
+                axes[1].imshow(top_down)
+                axes[1].set_title(f'Top down - Trajectory {traj + 1}')
+                axes[1].axis('off')
+                goal_ax_idx = 2
+            else:
+                goal_ax_idx= 1
+
+            axes[goal_ax_idx].imshow(img_goal)
+            axes[goal_ax_idx].set_title(f'Goal')
+            axes[goal_ax_idx].axis('off')
             plt.tight_layout()
 
             file_name = os.path.join(temp_path, f'{frame_counter}.png')
@@ -370,11 +381,10 @@ def data_gif(path: str, gif_path: str = 'movie.gif', agent_name: str = 'Agent', 
     if os.path.exists(gif_path):
         os.remove(gif_path)
 
-    # with imageio.get_writer(gif_path, mode='I', duration=duration) as writer:
     with imageio.get_writer(gif_path, mode='I', fps=1 / duration) as writer:
         for filename in files:
             image = imageio.imread(filename)
             writer.append_data(image)
     # Remove temp gif factory
-    if os.path.exists(temp_path):
-        shutil.rmtree(temp_path)
+    # if os.path.exists(temp_path):
+    #     shutil.rmtree(temp_path)

@@ -19,11 +19,15 @@ class Dijkstra(Policy):
 
     This policy has access to privileged information."""
 
-    def __init__(self, env: object):
+    def __init__(self, env: object = None):
         # Need access to env to figure out paths
         self.env = env
         self.goal = np.array([[-1, -1]])
         self.actions = None
+        self.is_oracle = True
+
+    def setup_sim(self, env):
+        self.env = env
 
     def get_action(self, x_current: np.ndarray, x_goal: np.ndarray, prev_reward: int, scan: np.ndarray = None) -> int:
         goal = self.env.goal_idx

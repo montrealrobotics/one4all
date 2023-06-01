@@ -29,7 +29,7 @@ from mazelab import Object
 from mazelab import DeepMindColor as color
 from mazelab.generators import morris_water_maze, random_maze, random_shape_maze, u_maze, double_t_maze
 
-from src.models.policies.policy import Policy
+from src.models.policies.base_policy import Policy
 from src.utils.split_dataset import split_data
 
 
