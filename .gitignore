@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pycharm
+.idea/
+
+# Project stuff
+components/
+data/
+data_habitat/
+logs/
+checkpoints/

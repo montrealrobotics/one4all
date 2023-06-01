@@ -181,8 +181,8 @@ def plot_spurious_edges_graph(graph: nx.Graph, spurious_edges: np.ndarray, envir
     plt.xlim(x_min - offset, x_max + offset)
     plt.ylim(y_min - offset, y_max + offset)
     plt.axis("off")
-    plt.tight_layout()
-    plt.title("Spurious edges", y=-0.01)
+    plt.title("Spurious edges")
+    # plt.tight_layout()
     return fig
 
 
@@ -295,8 +295,8 @@ def plot_connectivity_graph(graph: nx.Graph, environment: str = 'maze',
     plt.xlim(x_min - offset, x_max + offset)
     plt.ylim(y_min - offset, y_max + offset)
     plt.axis("off")
-    plt.tight_layout()
-    plt.title(f"Is {plot_type} graph weakly connected? {nx.is_weakly_connected(graph)}", fontsize=16, y=-0.01)
+    plt.title(f"Is {plot_type} graph weakly connected? {nx.is_connected(graph)}", fontsize=16)
+    # plt.tight_layout()
     return fig
 
 

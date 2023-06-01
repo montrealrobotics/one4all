@@ -188,7 +188,7 @@ class One4AllDataset(Dataset):
         self.dt = dt
         self.h = h
         # Create undirected graph
-        self.graph = nx.DiGraph()
+        self.graph = nx.Graph()
         self.any_positive = any_positive
         # Radius to compute ground truth graph
         self.gt_radius = [gt_radius[0], gt_radius[1]]
@@ -217,14 +217,9 @@ class One4AllDataset(Dataset):
             self.graph.update(chain_graph)
 
         # Backup original graph of chains as undirected - only needed to train local metric
-        self.chain_graph: nx.Graph = remove_attributes(self.graph.copy().to_undirected(),
+        self.chain_graph: nx.Graph = remove_attributes(self.graph.copy(),
                                                        node_attr=['gt', 'image_path', 'action_counts'],
                                                        edge_attr=['action', 'reward'])
-        # Save chain_graph in memory
-        chain_graph_directed: nx.Graph = remove_attributes(self.graph.copy(),
-                                                           node_attr=['gt', 'image_path', 'action_counts'],
-                                                           edge_attr=['action', 'reward'])
-        save_graph(os.path.join(self.path, 'chain_graph_directed.pkl'), chain_graph_directed)
 
         # Create list of keys to pass augmentations
         self.anchor_aug_keys, self.pos_aug_keys = get_aug_keys(self.k, self.n_positives)
@@ -239,16 +234,12 @@ class One4AllDataset(Dataset):
     def get_ground_truth_graph(self):
         return load_graph(os.path.join(self.path, 'gt_graph.pkl'))
 
-    def get_chain_graph(self):
-        return load_graph(os.path.join(self.path, 'chain_graph_directed.pkl'))
-
     def _build_gt_graph(self, graph):
         log.info('Computing ground truth graph for environment {}'.format(self.experiment))
         gt = nx.get_node_attributes(graph, "gt")
         # Connectivity radius
         r_xy, r_rot = self.gt_radius
 
-        gt_graph = None
         if self.env_type == 'maze':
             # GT of maze-like environments
             # Maze envs heading is composed of x-y coordinates only
@@ -257,18 +248,16 @@ class One4AllDataset(Dataset):
             r_xy += 0.1
             edges = self.euclidian_radius_neighbors(gt_array, r_xy)
 
-            # Create final ground truth graph - Transform directed to undirected, populate, and then move to directed
-            gt_graph = nx.create_empty_copy(graph).to_undirected(reciprocal=False)
+            # Create final ground truth graph
+            gt_graph = nx.create_empty_copy(graph)
             gt_graph.update(edges=edges)
-            # Make undirected graph directed again
-            gt_graph = gt_graph.to_directed()
         else:
             # Used to compute GT geodesic of SE(2) environments
             gt_array = np.asarray([[val['x'], val['y'], val['sin'], val['cos']] for _, val in gt.items()])
             mask = habitat_connectivity(gt_array, forward=self.gt_radius[0], angle=self.gt_radius[1])
 
             # Display some stats on connectivity
-            mask_chains = nx.adjacency_matrix(load_graph(os.path.join(self.path, 'chain_graph_directed.pkl')))
+            mask_chains = nx.adjacency_matrix(self.chain_graph)
             chain_edges = mask_chains.sum()
             closure_edges = ((mask - mask_chains) == 1).sum()
             total = mask.sum()
@@ -283,11 +272,11 @@ class One4AllDataset(Dataset):
             # Create edges
             edges = [(r, c, {'weight': w + 1e-6}) for r, c, w in zip(rows, cols, weights)]
 
-            # Create directed edges
-            gt_graph = nx.create_empty_copy(graph).to_directed()
+            # Create undirected edges
+            gt_graph = nx.create_empty_copy(graph)
             gt_graph.update(edges=edges)
 
-        log.info(f"Is ground truth graph connected: {nx.is_weakly_connected(gt_graph)} - Environment {self.experiment}")
+        log.info(f"Is ground truth graph connected: {nx.is_connected(gt_graph)} - Environment {self.experiment}")
         return gt_graph
 
     def compute_geodesics(self, gt_array: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -368,10 +357,7 @@ class One4AllDataset(Dataset):
         # Count current number of nodes in Graph
         number_states = self.graph.number_of_nodes()
         # Chain graph and add edges with weight = 1
-        local_graph = nx.path_graph(
-            np.arange(number_states, number_states + number_new_states),
-            create_using=nx.DiGraph
-        )
+        local_graph = nx.path_graph(np.arange(number_states, number_states + number_new_states))
         nx.set_edge_attributes(local_graph, values=1, name='weight')
 
         for s in range(number_states, number_states + number_new_states, 1):
@@ -685,7 +671,7 @@ class One4AllDataset(Dataset):
 
         # Check components in graph
         n_components, labels = scipy.sparse.csgraph.connected_components(graph,
-                                                                         directed=True,
+                                                                         directed=False,
                                                                          return_labels=True)
         if n_components != 1:
             log.warning(f'Train graph is not connected. Has {n_components} components.')
@@ -695,7 +681,7 @@ class One4AllDataset(Dataset):
 
         log.info('Precomputing Dijkstra distances (this may take a while)...')
         # If predecessors = 9999, then there is not path between the two samples
-        geodesics_len, predecessors = dijkstra(graph, return_predecessors=True, directed=True)
+        geodesics_len, predecessors = dijkstra(graph, return_predecessors=True, directed=False)
         self.geodesics_len = geodesics_len
 
         # Store newly computed geodesics in memory
@@ -703,20 +689,20 @@ class One4AllDataset(Dataset):
             np.save(f, geodesics_len)
 
 
-# k = 4
+# k = 1
 # dt = 1
-# h = 10
+# h = 1
 # # env = 'castle_s1_15'
-# env = 'Annawan'
+# env = 'omaze_random'
 # n_positives = 'temporal'
 # anchor_keys, pos_keys = get_aug_keys(k, 1)
 # keys = anchor_keys + sum(pos_keys, [])  # pos_keys is a list of list, make it flat
-# t = get_augmented_transforms(keys=keys, resolution=96, env='habitat')
-# # t = get_transforms(keys=keys, resolution=96, env='habitat')
+# # t = get_augmented_transforms(keys=keys, resolution=96, env='habitat')
+# t = get_transforms(keys=keys, resolution=64)
 # # gt_radius = [1.0, 1.571]
-# gt_radius = [1.05, 1.571]
-# asd = Plan2VecStates(gt_radius=gt_radius, k=k, dt=dt, n_positives=n_positives, h=h, env_type='habitat', path='./data',
-#                      environment=env, transform=t, aug_anchor=True, split='val', panorama=True, negative_prob=0.5)
+# gt_radius = [1.5, 1.571]
+# asd = One4AllDataset(gt_radius=gt_radius, k=k, dt=dt, n_positives=n_positives, h=h, env_type='maze', path='./data',
+#                      environment=env, transform=t, aug_anchor=True, split='val', panorama=False, negative_prob=0.0)
 # for idx in [0, 10, 17, 52, 63, 98, 99, 100, 247, 64, 355, 54, 25, 69, 458, 46, 299, 302]:
 #     asd[idx]
 
@@ -831,7 +817,7 @@ class O4ADataModule(pl.LightningDataModule):
         z = torch.cat([d['anchors'] for d in preds])
         ids = torch.cat([d['anchors_id'] for d in preds])
 
-        model.update_graph(anchors=z.cpu().numpy(), s_id=ids.view(-1).tolist(), batch_size=32, update=True,
+        model.update_graph(anchors=z.cpu().numpy(), indices=ids.view(-1).tolist(), batch_size=32, update=True,
                            dataset=dataset, number_gt_edges=number_gt_edges)
 
         # Reapply original transforms
