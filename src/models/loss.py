@@ -25,18 +25,13 @@ class HingeLoss:
         :param hinge_loss: Whether to hinge loss or not
     """
 
-    def __init__(self, pos_d: float = 1.0, neg_d: float = 2.0, rot_pos_d: float = 1.0,
-                 speed_target: bool = False, scale: Union[int, float] = 1.0,
-                 margin: str = 1.4, loss: str = 'huber', tau: float = 1.0, hinge_loss: bool = True):
-        self.speed_target = speed_target
-        self.neg_target = 0
-        self.scale = scale
-        self.margin = margin
+    def __init__(self, pos_d: float = 1.0, neg_d: float = 2.0, scale: Union[int, float] = 1.0,
+                 loss: str = 'huber', tau: float = 1.0, hinge_loss: bool = True):
         self.loss = loss
         self.tau = tau
+        self.scale = scale
         self.pos_d = pos_d * self.scale
         self.neg_d = neg_d * self.scale
-        self.rot_pos_d = rot_pos_d * self.scale
         self.hinge_loss = hinge_loss
         assert self.loss in {'l1', 'l2', 'huber'}, 'Please select a valid loss from the options {l1, l2, huber}'
 

@@ -42,5 +42,5 @@ name: ???
 # Data environment. Used to interpolate the parameters of the models and datamodules
 environment: ???
 
-scale: -1
+scale: 1.0
 freeze_at_epoch: -1

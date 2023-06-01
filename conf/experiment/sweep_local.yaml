@@ -45,8 +45,6 @@ hydra:
       model.net.num_heads: choice(8)
       model.net.activation: choice(relu, leaky_relu)
       model.net.dropout: choice(0.0)
-      # Loss
-      model.loss.alpha: choice(1.0)
       # Optimizer
       model/optimizer: choice(adam, adamw)
       model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
