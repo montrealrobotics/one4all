@@ -66,7 +66,7 @@ class MazeEnv(BaseEnv):
     Attributes:
         maze (MazeEnv): Actual MazeEnv object from the Mazelab repo.
         start_idx(list): List of shape [[start_x, start_y]] determining the agent starting position.
-        goal_idx(list): List of shape [[goal, goal_y]] determining the agent's goal.
+        goal_idx(list): List of shape [[goal_x, goal_y]] determining the agent's goal.
         motions(namedtuple): Named tuple representing available agent actions.
         observation_space(gym.Box): Observation space.
         action_space(gym.Discrete): Discrete action space.
@@ -171,6 +171,20 @@ class MazeEnv(BaseEnv):
             if is_passable and is_not_goal and is_not_start:
                 break
         return x, y
+
+    def check_collisions(self)-> List:
+        """Return a list of 8 booleans checking whether actions result in a collision or not."""
+        not_passable = self.maze.to_impassable()
+        current_position = self.maze.objects.agent.positions[0]
+        result = []
+        for motion in self.motions:
+            new_position = [current_position[0] + motion[0], current_position[1] + motion[1]]
+            collides = not_passable[new_position[0], new_position[1]]
+            result.append(collides)
+
+        return result
+
+
 
     def sample_start(self):
         """Resample the starting position."""
@@ -496,6 +510,8 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
                 json.dump(d, fp, indent=1)
 
         # Run episode
+        scan = 1 - np.array(env.check_collisions())
+
         for n in range(max_n_steps):
 
             # Extract image and coordinates
@@ -506,19 +522,22 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
             x, y = env.maze.objects.agent.positions[0]
 
             # Environment step
-            a = policy.get_action(x_current, x_goal, current_reward)
-            _, current_reward, done, _ = env.step(a)
+            a = policy.get_action(x_current, x_goal, current_reward, scan=scan)
 
             # Add optional score charts
             if score:
-                action_probs, dist = policy.score()
+                scan = 1 - np.array(env.check_collisions())
+                dist = np.zeros(len(scan))
+
+            # Step environment
+            _, current_reward, done, _ = env.step(a)
 
             # Save frame and datamodule
             if path:
                 current_path = os.path.join(traj_path, 'images', f'{n}.png')
                 if score:
-                    # Save image with probabilities and global distances
-                    plot_with_scores(path=current_path, dist=dist, action_probs=action_probs, image=x_current)
+                    # Save image with collision probabilities and global distances
+                    plot_with_scores(path=current_path, dist=dist, action_probs=scan, image=x_current)
                 else:
                     Image.fromarray(x_current).resize((256, 256)).save(current_path)
                 x, y = int(x), int(y)
@@ -539,10 +558,10 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
                     x_current = env.render('rgb_array')
                     x_current = np.array(Image.fromarray(x_current).resize((256, 256)))
                     if score:
-                        a = policy.get_action(x_current, x_goal, current_reward)  # Update model state
-                        action_probs, dist = policy.score()
+                        scan = 1 - np.array(env.check_collisions())
+                        dist = np.zeros(len(scan))
                         # Save image with probabilities and global distances
-                        plot_with_scores(path=current_path, dist=dist, action_probs=action_probs, image=x_current)
+                        plot_with_scores(path=current_path, dist=dist, action_probs=scan, image=x_current)
                     else:
                         Image.fromarray(x_current).resize((256, 256)).save(current_path)
                 break
