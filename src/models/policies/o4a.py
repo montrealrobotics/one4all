@@ -11,6 +11,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
+from einops import rearrange
 
 from src import utils
 from src.datamodule.dataset import get_aug_keys
@@ -161,10 +162,12 @@ class One4All(BaseModel):
 
         # Compute distances to goal
         if self.geodesic_regressor is not None:
-            self.d_to_goal_global = self.geodesic_regressor.head(
-                self.state_global.float(),
-                self.goal_global.float(),
-            ).double().squeeze()
+            self.d_to_goal_global = torch.cdist(self.state_global, self.goal_global, p=2).squeeze()
+            # TODO: remove this if above works
+            # self.d_to_goal_global = self.geodesic_regressor.head(
+            #     self.state_global.float(),
+            #     self.goal_global.float(),
+            # ).double().squeeze()
         else:
             self.d_to_goal = np.inf
         self.d_to_goal_local = torch.linalg.norm(self.state_local - self.goal_local, ord='fro')
@@ -246,11 +249,13 @@ class One4All(BaseModel):
     def compute_attractive_potentials(self) -> torch.Tensor:
         """Attractor to goal in global space."""
         # Global planning using geodesic distances
-        potentials = self.geodesic_regressor.head.forward_all_codes(
-            self.waypoints_global.float(),
-            self.get_goal().float(),
-            deployment=True
-        ).double().squeeze()
+        potentials = torch.cdist(rearrange(self.waypoints_global, 'b -> 1 b'), self.get_goal()).squeeze()
+        # TODO: remove this if above works
+        # potentials = self.geodesic_regressor.head.forward_all_codes(
+        #     self.waypoints_global.float(),
+        #     self.get_goal().float(),
+        #     deployment=True
+        # ).double().squeeze()
         if not potentials.ndim:
             # Torch item. Map to 1D vector of size 1
             potentials = potentials.reshape((1,))
