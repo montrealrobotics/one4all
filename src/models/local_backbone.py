@@ -401,7 +401,7 @@ class LocalBackbone(BaseModel):
         """
         # Update training graph - do not update graph attribute in validation dataloader
         if self.has_logged_debug_gt:
-            graph = self.update_graph(anchors=anchors, indices=ids, batch_size=32, update=False,
+            graph = self.update_graph(anchors=anchors, indices=ids, update=False,
                                       dataset=dataloader.dataset, number_gt_edges=number_gt_edges)
         else:
             # Log debug ground truth graph
@@ -454,7 +454,7 @@ class LocalBackbone(BaseModel):
         return batch
 
     def update_graph(self, anchors: np.ndarray, indices: np.ndarray,
-                     batch_size: int, dataset: Dataset,
+                     dataset: Dataset,
                      update: bool = False,
                      number_gt_edges: int = 1e6) -> nx.Graph:
         """
@@ -514,15 +514,14 @@ class LocalBackbone(BaseModel):
             if update:
                 # If updating graph, add back transition edges from the original graph of chains
                 # We only do so if the model predicted not connected for that edge
-                for i_r, r in enumerate(index):
-                    for i_c, c in enumerate(indices):
-                        if dataset.graph.has_edge(c, r):
-                            # Replace predicted action in graph with GT action
-                            # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
-                            actions[i_r, i_c] = dataset.graph.edges[c, r]['action'][0]
-                            if actions[i_r, i_c] == 0:
-                                # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
-                                counter["transitions"] += 1
+                for i_c, c in enumerate(indices):
+                    if dataset.graph.has_edge(index, c):
+                        # Replace predicted action in graph with GT action
+                        # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
+                        actions[i_c] = dataset.graph.edges[index, c]['action'][0]
+                        if actions[i_c] == 0:
+                            # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
+                            counter["transitions"] += 1
 
 
             # Extract selected edges + weight and add to list of edges

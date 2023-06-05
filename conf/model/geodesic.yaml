@@ -1,7 +1,6 @@
 defaults:
   - base
   - net: geodesic
-  - net@head: regressor
 
 _target_: src.models.geodesic_regressor.GeodesicRegressor
 backbone_path: ${checkpoints.backbone_path}  # Path to local checkpoing

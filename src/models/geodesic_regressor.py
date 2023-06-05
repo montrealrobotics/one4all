@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from src.models.base_model import BaseModel
-from src.models.components.geodesic_nets import GeodesicBackbone, RegressionHead
+from src.models.components.geodesic_nets import GeodesicBackbone
 from src.utils import fig2img, get_logger
 from src.utils.visualization import plot_2d_latent, plot_connectivity_graph
 from src.utils.eval_metrics import a_star_eval_global
@@ -21,7 +21,6 @@ class GeodesicRegressor(BaseModel):
 
         Args:
             net: Geogedic regressor's encoder
-            head: Regression head to regress shortest path length
             optimizer: functools.partial torch.optim optimizer with all arguments except
             model parameters. Please refer to the Hydra doc for partially initialized modules.
             local_metric_path: Path to trained local_metric checkpoint.
@@ -36,7 +35,6 @@ class GeodesicRegressor(BaseModel):
 
     def __init__(self,
                  net: GeodesicBackbone,
-                 head: RegressionHead,
                  optimizer: functools.partial,
                  backbone_path: str,
                  n_edges: int = 1000,
@@ -51,7 +49,6 @@ class GeodesicRegressor(BaseModel):
 
         # Select model
         self.net = net
-        self.head = head
 
         # Loss
         self.loss = torch.nn.MSELoss()
@@ -164,7 +161,7 @@ class GeodesicRegressor(BaseModel):
             dist = dataloader.dataset.geodesics_len
             if graph.number_of_nodes() == pred.shape[0]:
                 rel_avg_path_len, avg_access_rate, _ = a_star_eval_global(graph, 50, global_codes=pred,
-                                                                          regression_head=self.head, dijkstra_dist=dist)
+                                                                          dijkstra_dist=dist)
                 self.log('{}/rel_avg_path_len'.format(stage), rel_avg_path_len, prog_bar=True, logger=True)
                 self.log('{}/avg_access_rate'.format(stage), avg_access_rate, prog_bar=True, logger=True)
 
@@ -213,7 +210,8 @@ class GeodesicRegressor(BaseModel):
         # Forward method
         h_anchor, h_positive = self.forward(anchor), self.forward(pos)
         # Compute heuristic
-        heuristic = self.head(h_anchor.float(), h_positive.float()).squeeze().double()
+        heuristic = torch.linalg.norm(h_anchor - h_positive, dim=1)
+        # heuristic = self.head(h_anchor.float(), h_positive.float()).squeeze().double()
 
         # Match L2 norm to the Dijkstra cost - Zero the values that are inf in geodesic target
         loss = self.loss(heuristic * ~inf_mask, cost.masked_fill_(inf_mask, 0))

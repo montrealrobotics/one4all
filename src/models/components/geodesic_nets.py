@@ -13,6 +13,8 @@ class GeodesicBackbone(pl.LightningModule):
         emb_dim: Embedding dimension of the output
         n_layers: Number of layers to use for this model
         activation: Activation function
+        aggregation: Type of aggregation
+        add_norm: Whether to add or not the norm between two latent codes to the input
         p_dropout: Dropout probability
         normalize_input: whether to normalize codes before feeding it into the model or not
     """

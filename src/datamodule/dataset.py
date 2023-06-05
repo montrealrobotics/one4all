@@ -817,7 +817,7 @@ class O4ADataModule(pl.LightningDataModule):
         z = torch.cat([d['anchors'] for d in preds])
         ids = torch.cat([d['anchors_id'] for d in preds])
 
-        model.update_graph(anchors=z.cpu().numpy(), indices=ids.view(-1).tolist(), batch_size=32, update=True,
+        model.update_graph(anchors=z.cpu().numpy(), indices=ids.view(-1).tolist(), update=True,
                            dataset=dataset, number_gt_edges=number_gt_edges)
 
         # Reapply original transforms
