@@ -599,10 +599,13 @@ class One4AllDataset(Dataset):
             ## This condition is only used to train FD ##
             #############################################
             # Ignore temporal neighbor and sample from updated graph instead
-            successors = list(self.graph.successors(idx))
-            # Condition to prevent sampling empty list when populating list for the first time
-            successors = [idx] if len(successors) == 0 else successors
-            positive_ids = np.random.choice(successors, size=self.n_positives).reshape(-1, 1).tolist()
+            neighbors = list(self.graph.neighbors(idx))
+            positive_ids = np.random.choice(neighbors, size=self.n_positives).reshape(-1, 1).tolist()
+            # # Ignore temporal neighbor and sample from updated graph instead
+            # successors = list(self.graph.successors(idx))
+            # # Condition to prevent sampling empty list when populating list for the first time
+            # successors = [idx] if len(successors) == 0 else successors
+            # positive_ids = np.random.choice(successors, size=self.n_positives).reshape(-1, 1).tolist()
             # All actions for forward dynamics come from connection head - This is an instance of Co-training
             target = 0
         elif self.n_positives > 0 and self.any_positive and not self.temporal:
