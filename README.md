@@ -3,8 +3,6 @@
 One-4-All (O4A) implementation for image-goal navigation in the Habitat simulator and some toy maze problems. See
 the paper [here](https://arxiv.org/abs/2303.04011).
 
-If you aim to reproduce the Habitat results from the paper using our checkpoints, you should use the [Paper release](https://github.com/montrealrobotics/one4all/releases/tag/v1.0.0). 
-Previous O4A checkpoints may not be compatible with the latest version of the code.
 
 # Installation
 ## One-4-All
@@ -80,6 +78,10 @@ python script/create_pointnav_dataset.py
 # One-4-All
 In this section, we will go over how to generate data, train O4A and navigate the model in Habitat. You may want
 to skip training and download trained checkpoints from [here](https://drive.google.com/file/d/1DUFptg6R2xUbTtzIRpIyIJnHECFvIOr5/view?usp=sharing).
+
+
+If you aim to reproduce the Habitat results from the paper using our checkpoints, you should use the [Paper release](https://github.com/montrealrobotics/one4all/releases/tag/v1.0.0).
+Previous O4A checkpoints may not be compatible with the latest version of the code.
 ## Generating data
 We'll use the Habitat simulator for data generation and navigation. You first need to download the relevant scenes 
 (at least Annawan) from the official [Gibson repositiory](https://github.com/StanfordVL/GibsonEnv/blob/master/gibson/data/README.md#download-gibson-database-of-spaces). 
