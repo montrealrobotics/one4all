@@ -3,13 +3,16 @@
 One-4-All (O4A) implementation for image-goal navigation in the Habitat simulator and some toy maze problems. See
 the paper [here](https://arxiv.org/abs/2303.04011).
 
+If you aim to reproduce the Habitat results from the paper using our checkpoints, you should use the [Paper release](https://github.com/montrealrobotics/one4all/releases/tag/v1.0.0). 
+Previous O4A checkpoints may not be compatible with the latest version of the code.
+
 # Installation
 ## One-4-All
 
 Download the repository with the submodules by running:
 
 ```
-git clone --recurse-submodules git@github.com:MikeS96/plan2vec.git
+git clone --recurse-submodules https://github.com/montrealrobotics/one4all.git
 ```
 
 To install the project run the following commands within the project folder.
@@ -33,7 +36,7 @@ pip3 install -r requirements.txt
 pip3 install geomloss
 cd mazelab
 pip3 install -e .
-export PYTHONPATH=<path_to>/plan2vec/:$PYTHONPATH
+export PYTHONPATH=<path_to>/one4all/:$PYTHONPATH
 ```
 
 ## Habitat-sim
