@@ -9,7 +9,7 @@ defaults:
   - policy: ???
   - metric: val_loss                       # set logging directory for hydra/logger
   - checkpoints: null   # Points to habitat by default
-  - env: ???
+  - env: habitat                              # config to easily set up all environment specific parameters
 
     # enable color logging
   - override hydra/hydra_logging: colorlog      # Pretty colors
@@ -35,9 +35,8 @@ seed: 12345
 # (you can overwrite this name in experiment configs)
 name: test
 
-# Data environment. Used to interpolate the parameters of the models and datamodules
-environment: habitat
-sim_env: ???
+environment: ???  # maze or habitat
+sim_env: ???  # actual environment used in simulation
 
 split: .3
 collect_data: false  # Save trajectory data to the data folder

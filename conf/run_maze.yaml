@@ -1,9 +1,9 @@
 defaults:
-  - _self_                                      # Override default config with derived ones
-  - env: umaze_local
-  - policy: nnsystem
+  - _self_                                 # Override default config with derived ones
+  - policy: maze_random
   - log_dir: default                       # set logging directory for hydra/logger
 
+  - env: maze                              # config to easily set up all environment specific parameters
   - experiment: null
 
     # enable color logging
@@ -28,17 +28,18 @@ seed: 12345
 # default name for the experiment, determines logging folder path
 # (you can overwrite this name in experiment configs)
 name: test
-# Data environment. Used to interpolate the parameters of the models and datamodules
-environment: ???
+
+environment: ???  # Maze or ahbitat
+sim_env: ???  # actual environment used in simulation
 
 # Test parameters
 test_params:
   n_trajectories: 200
-  max_n_steps: 50
+  max_steps: 50
   sample_start: true
 
 gif_params:
-  name: false  # Set to false to avoid gif generation
+  goal: false  # Set to false to avoid video generation with the goal image
   failures: false  # Only include failures in the gif
   score: false   # Add visualization for action probabilities and global metric score to gifs. Only works with forward generator
   duration: .1  # Duration of each frame
