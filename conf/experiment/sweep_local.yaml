@@ -49,3 +49,5 @@ hydra:
       model/optimizer: choice(adam, adamw)
       model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
       model/lr_scheduler_config: choice(no_scheduler)
+      # Trainer
+      trainer.accumulate_grad_batches: choice(1)
