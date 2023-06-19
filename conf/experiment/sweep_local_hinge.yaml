@@ -7,7 +7,6 @@ defaults:
 model:
   loss:
     contrastive_loss:
-      speed_target: true
       hinge_loss: true
       loss: huber
 

@@ -43,3 +43,5 @@ hydra:
       # Datamodule
       datamodule.batch_size: choice(256, 512)
       datamodule.augmentations: choice(false, augmented)
+      # Trainer
+      trainer.accumulate_grad_batches: choice(1)

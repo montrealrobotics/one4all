@@ -21,7 +21,7 @@ datamodule:
 # Local backbone and global head
 model:
   step_every: 1
-  log_figure_every: 25
+  log_figure_every_n_epoch: 25
   net:
     emb_dim: ${local_emb_dim}           # Embedding dimension of local metric
 
@@ -34,7 +34,6 @@ hydra:
       model.noise: choice(0, 1e-3, 1e-2, 1e-1)
       model.net.n_layers: choice(2, 4, 8)
       model.net.activation: choice(relu, leaky_relu)
-      model.net.p_dropout: choice(0.0)
       model.net.normalize_input: choice(true)
       # Optimizer
       model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
@@ -45,3 +44,4 @@ hydra:
       datamodule.augmentations: choice(false, augmented)
       # Trainer
       model/optimizer: choice(adam, adamw)
+      trainer.accumulate_grad_batches: choice(1)
