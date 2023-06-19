@@ -249,7 +249,7 @@ class One4All(BaseModel):
     def compute_attractive_potentials(self) -> torch.Tensor:
         """Attractor to goal in global space."""
         # Global planning using geodesic distances
-        potentials = torch.cdist(rearrange(self.waypoints_global, 'b -> 1 b'), self.get_goal()).squeeze()
+        potentials = torch.cdist(self.waypoints_global, self.get_goal()).squeeze()
         # TODO: remove this if above works
         # potentials = self.geodesic_regressor.head.forward_all_codes(
         #     self.waypoints_global.float(),
@@ -300,11 +300,11 @@ class One4All(BaseModel):
         goal_action = self.goal_action()
 
         if goal_action > 0:
-            print("Calling STOP because goal is reachable.")
+            # print("Calling STOP because goal is reachable.")
             return True
 
         if self.d_to_goal_local < self.hparams.stop_d_local:
-            print(f"Calling STOP because local distance is under {self.hparams.stop_d_local}.")
+            # print(f"Calling STOP because local distance is under {self.hparams.stop_d_local}.")
             return True
 
         return False
@@ -352,3 +352,12 @@ class One4All(BaseModel):
         Return collision probabilities and potentials."""
         # FIXME hot fix to remove NON_CONNECTED and STOP for maze envs
         return 1 - self.collision_probs.cpu().numpy()[1:], self.potentials.cpu().numpy()[1:]
+
+class One4AllMaze(One4All):
+    """One4All with minor tweaks for maze environments."""
+    def update_collision_prob(self):
+        """In maze, the "scan" already indicates which action collides."""
+        self.collision_probs = torch.tensor(self.current_scan)
+    def goal_action(self):
+        """Check if goal is reachable"""
+        return False

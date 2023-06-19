@@ -1,0 +1,12 @@
+_target_: src.models.policies.o4a.One4AllMaze
+backbone_path: components/maze/backbone.ckpt        # Path to local checkpoint
+fd_path: components/maze/fd.ckpt                        # Path to forward dynamics
+gr_path: components/maze/geodesic_regressors/room.ckpt             # Path to global checkpoint
+att_factor: 1                                          # Multiplicative factor applied to positive potentials
+rep_factor: 1.                                          # Multiplicative factor applied to repulsive potentials
+n_visited: 20                                        # Size of the visite state buffer
+repulsor_radius: 1.1                                   # Radius of the repulsors in latent space
+collision_len: .5                                      # Length of the collision box
+collision_width: .17                                   # Half the width of the collision box
+collision_penalty: 10000                               # Collision penalty added to colliding actions
+stop_d_local: .5                                      # Stopping threshold applied to the local metric

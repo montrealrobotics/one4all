@@ -509,10 +509,9 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
             with open(os.path.join(traj_path, f'goal.json'), 'w') as fp:
                 json.dump(d, fp, indent=1)
 
-        # Run episode
-        scan = 1 - np.array(env.check_collisions())
-
         for n in range(max_n_steps):
+            # Run episode
+            scan = np.array(env.check_collisions())
 
             # Extract image and coordinates
             x_current = env.render('rgb_array')
@@ -526,11 +525,16 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
 
             # Add optional score charts
             if score:
-                scan = 1 - np.array(env.check_collisions())
+                scan = np.array(env.check_collisions())
                 dist = np.zeros(len(scan))
 
             # Step environment
-            _, current_reward, done, _ = env.step(a)
+            # a of 0 means stop
+            if a > 0:
+                _, current_reward, done, _ = env.step(a-1)
+                stop = False
+            else:
+                stop = True
 
             # Save frame and datamodule
             if path:
@@ -558,12 +562,15 @@ def sample_maze_trajectories(env: MazeEnv, policy: Policy, n_trajectories: int, 
                     x_current = env.render('rgb_array')
                     x_current = np.array(Image.fromarray(x_current).resize((256, 256)))
                     if score:
-                        scan = 1 - np.array(env.check_collisions())
+                        scan = np.array(env.check_collisions())
                         dist = np.zeros(len(scan))
                         # Save image with probabilities and global distances
                         plot_with_scores(path=current_path, dist=dist, action_probs=scan, image=x_current)
                     else:
                         Image.fromarray(x_current).resize((256, 256)).save(current_path)
+                break
+
+            if stop:
                 break
 
         # Check if we reached goal and the number of steps

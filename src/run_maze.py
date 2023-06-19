@@ -39,7 +39,7 @@ def run_maze(cfg: DictConfig) -> Optional[float]:
     # Agent benchmark
     env = get_maze_env(maze_name=environment_name)
     agent_policy = hydra.utils.instantiate(cfg.policy)
-    agent_policy.transform = get_transforms(resolution=cfg.resize)
+    agent_policy.transform = get_transforms(keys=agent_policy.keys if hasattr(agent_policy, "keys") else None, resolution=cfg.resize)
     if hasattr(agent_policy, "is_oracle") and agent_policy.is_oracle:
         agent_policy.setup_sim(env)
 
@@ -50,7 +50,7 @@ def run_maze(cfg: DictConfig) -> Optional[float]:
                                               max_n_steps=cfg.test_params.max_steps,
                                               sample_start=cfg.test_params.sample_start,
                                               score=cfg.gif_params.score,
-                                              path=path, save_last=True)
+                                              path=path, save_last=True, stop_on_goal=False)
 
     # Oracle benchmark
     env = get_maze_env(maze_name=environment_name)
@@ -60,7 +60,7 @@ def run_maze(cfg: DictConfig) -> Optional[float]:
                                             max_n_steps=cfg.test_params.max_steps,
                                             sample_start=cfg.test_params.sample_start,
                                             score=False,
-                                            path=False)
+                                            path=False, stop_on_goal=True)
 
     # Report results
     spl_ = spl(success, steps, dij_steps)

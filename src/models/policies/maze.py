@@ -40,4 +40,4 @@ class Dijkstra(Policy):
             goal = self.env.unwrapped.maze.objects.goal.positions[0]
             self.actions = dijkstra_solver(array, motions, start, goal)
 
-        return self.actions.pop(0)
+        return self.actions.pop(0) + 1
