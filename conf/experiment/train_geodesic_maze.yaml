@@ -3,10 +3,9 @@
 # Config to train a global metric head locally
 defaults:
   - train_base
-  - override /datamodule: global
-  - override /model: global
-  - override /model/net: global
-  - override /model/net@model.head: regressor
+  - override /datamodule: geodesic
+  - override /model: geodesic
+  - override /model/net: geodesic
   - override /model/optimizer: adam
   - override /model/lr_scheduler_config: cycliclr
 
@@ -17,9 +16,6 @@ model:
   net:
     n_layers: 3
     activation: relu
-  head:
-    aggregation: delta
-    add_norm: false
   optimizer:
     lr: 0.005
 

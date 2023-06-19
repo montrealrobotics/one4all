@@ -19,3 +19,4 @@ datamodule:
   val_batch_size: 32
   k: 1
   drop_last: false
+  panorama: false

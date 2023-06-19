@@ -2,7 +2,7 @@ defaults:
   - base
 
 n_positives: 1                                          # Use multiple positives
-local_metric_path: ${checkpoints.backbone_path}
+backbone_path: ${checkpoints.backbone_path}
 gt_radius: ???
 drop_last: false
 per_env_batches: false

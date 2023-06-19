@@ -2,10 +2,9 @@
 
 defaults:
   - sweep_base
-  - override /datamodule: global
-  - override /model: global
-  - override /model/net: global
-  - override /model/net@model.head: regressor
+  - override /datamodule: geodesic
+  - override /model: geodesic
+  - override /model/net: geodesic
   - override /metric: val_loss
 
 # name of the run determines folder name in logs
@@ -18,9 +17,6 @@ model:
   log_figure_every_n_epoch: 50
   net:
     emb_dim: ${local_emb_dim}           # Embedding dimension of local metric
-  head:
-    emb_dim: ${local_emb_dim}           # Embedding dimension of local metric
-    add_norm: false
 
 # Datamodule
 datamodule:
@@ -40,9 +36,6 @@ hydra:
       model.net.activation: choice(relu, leaky_relu)
       model.net.p_dropout: choice(0.0)
       model.net.normalize_input: choice(true)
-      # Head
-      model.head.aggregation: choice(concat, relative)
-      model.head.out_activation: choice(elu)
       # Optimizer
       model.optimizer.lr: tag(log, interval(1e-4, 1e-3))
       model/optimizer: choice(adam, adamw)

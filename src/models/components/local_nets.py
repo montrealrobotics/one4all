@@ -476,7 +476,7 @@ class Conv1DHead(nn.Module):
 ####################
 ###  Maze Model  ###
 ####################
-class LocalMetricMaze(pl.LightningModule):
+class LocalBackboneMaze(pl.LightningModule):
     """
     Local metric network implementation for a Maze Environments.
         Args:
@@ -484,7 +484,7 @@ class LocalMetricMaze(pl.LightningModule):
             k: Context length i.e. number of images in panorama.
             predictor: Options are {conv1d, transformer, mlp}
             num_blocks: Number of transformer blocks
-            dropout: (NOT USED) - dropout probability
+            dropout: dropout probability for the predictor
             num_heads: Number of transformers head per block
             use_cls: Whether to use CLS token as final embedding or actual anchor embedding
             norm: Normalize output to norm 1.
@@ -689,17 +689,16 @@ class Conv1DHeadHabitat(nn.Module):
         return self.head(x)
 
 
-class LocalMetricHabitat(pl.LightningModule):
+class LocalBackboneHabitat(pl.LightningModule):
     """
-    Local metric network implementation from Habitat/Jackal Environment.
+    Local backbone implementation for Habitat/Jackal Environment.
         Args:
             emb_dim: Embedding dimension of the output
             k: Context length i.e. number of images in panorama.
             n_positives: Number of positives in the input
-            encoder_type: (NOT USED) which encoder to use {default, resnet}
             predictor: Options are {conv1d, transformer, mlp}
             num_blocks: Number of transformer blocks
-            dropout: (NOT USED) - dropout probability
+            dropout: dropout probability for predictor
             num_heads: Number of transformers head per block
             use_cls: Whether to use CLS token as final embedding or actual anchor embedding
             activation: Activation function used to for the model, options are:
@@ -711,7 +710,6 @@ class LocalMetricHabitat(pl.LightningModule):
     def __init__(self, emb_dim: int,
                  k: int,
                  n_positives: Union[int, str],
-                 encoder_type: str = "resnet",
                  predictor: str = "conv1d",
                  num_blocks: int = 2,
                  dropout: float = 0.0,
@@ -731,7 +729,6 @@ class LocalMetricHabitat(pl.LightningModule):
         self.use_cls = use_cls
         self.normalize_output = normalize_output
         self.bn_momentum = bn_momentum
-        self.encoder_type = encoder_type
         self.bn = self.bn_momentum > 0.0
 
         out_features = 256 if self.emb_dim <= 256 else self.emb_dim
@@ -753,8 +750,8 @@ class LocalMetricHabitat(pl.LightningModule):
         self.activation = activation_function(activation)
 
         # Assume 96 x 96 RGB images
-        # resnet = models.resnet18(pretrained=False)  # Download from torch hub
-        resnet = torch.load('models/resnet18.pt')  # Load local checkpoint
+        resnet = models.resnet18(pretrained=False)  # Download from torch hub
+        # resnet = torch.load('models/resnet18.pt')  # Load local checkpoint
 
         # Read as b = batch size, n = number of positives, s = sequence dimension
         # c = number of channels, h = image height, w = image width

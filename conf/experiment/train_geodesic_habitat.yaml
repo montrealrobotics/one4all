@@ -2,7 +2,7 @@
 
 # Config to train a global metric head locally
 defaults:
-  - train_global_maze
+  - train_geodesic_maze
 
 name: 'geodesic_regressor_habitat'
 

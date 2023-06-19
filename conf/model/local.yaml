@@ -1,14 +1,11 @@
 defaults:
   - base
-  - net: habitat                            # Pick whichever model you want here [jackal, maze]
-  - net@connectivity_head: locomotion                 # Pick whichever model you want here [jackal, maze]
-  - loss: ce_none               # Pick loss here [infonce, hinge]
-  - loss@val_loss: null      # Pick loss here [infonce, hinge] Null will use the same as train
+  - net: habitat                                 # Pick whichever model you want here [jackal, maze]
+  - net@connectivity_head: connectivity          # Pick whichever model you want here [jackal, maze]
+  - loss: ce_none                                # Pick loss here [infonce, hinge]
+  - loss@val_loss: null                          # Pick loss here [infonce, hinge] Null will use the same as train
 
-_target_: src.models.local_metric.LocalMetric
-eps: 1.0                # (NOT USED) Epsilon used for loop closure
-scale: 1.0            # (NOT USED) Value used to scale the loss
-low_eps: 0.0               # Distance for loop closure in graph
+_target_: src.models.local_backbone.LocalBackbone
 n_edges: 10000             # Number of edges randomly sampled to plot connectivity graph
 n_samples: 5               # Number of false positives edges used to plot
 rho: 4                     # Threshold to visualize far spurious connections

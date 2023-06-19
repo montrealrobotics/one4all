@@ -157,15 +157,9 @@ def aggregate_val_metrics(metrics: Dict[str, torch.Tensor]) -> Dict[str, float]:
 class GlobalHeuristic:
     """Utility class to hold global codes and return geodesic length estimates"""
 
-    def __init__(self, z_global: torch.Tensor, head: object):
+    def __init__(self, z_global: torch.Tensor):
         # Compute lengths all vs all
-        lengths = list()
-        z_global = z_global.float()
-        # Set model in inference model
-        with torch.inference_mode():
-            for y in z_global:
-                lengths.append(head.forward_all_codes(y.unsqueeze(0), z_global))
-        self.lengths = torch.stack(lengths).double()
+        self.lengths = torch.cdist(z_global, z_global)
 
         # Track how many times the heuristic is accessed
         self.counter = 0
@@ -258,7 +252,6 @@ def spl(success: List, agent_path_length: List, shortest_path_length: List):
 def a_star_eval_global(graph: csr_matrix,
                        n_paths: int,
                        global_codes: torch.Tensor,
-                       regression_head: object,
                        dijkstra_dist: np.ndarray = None,
                        resample_start: bool = True) -> Tuple[float, float, List[List]]:
     """Solve n_paths planning episodes on the graph using A* and a global heuristic.
@@ -270,7 +263,6 @@ def a_star_eval_global(graph: csr_matrix,
         graph: Graph to run evaluation on. Must be connected.
         n_paths: Number of (start, goal) episodes to sample.
         global_codes: Global embedding of each observation in the graph. Used to approximate geodesic distances.
-        regression_head: Head use to estimate heuristic giving two codes
         dijkstra_dist: Dijkstra distances. Must be an (n_nodes, n_nodes) array. If provided, the A* path length
         are normalized by the actual shortest path length.
         resample_start: If starting positions should be resampled. If False, the previous goal is used as the new start.
@@ -281,7 +273,7 @@ def a_star_eval_global(graph: csr_matrix,
         paths: List of paths. Each path is a list of indices.
 
     """
-    heuristic = GlobalHeuristic(z_global=global_codes, head=regression_head)
+    heuristic = GlobalHeuristic(z_global=global_codes)
     avg_path_len, paths = a_star_eval(graph, n_paths, heuristic=heuristic, dijkstra_dist=dijkstra_dist,
                                       resample_start=resample_start)
     avg_node_access = heuristic.counter / n_paths

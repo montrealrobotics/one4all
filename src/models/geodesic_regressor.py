@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from src.models.base_model import BaseModel
-from src.models.components.global_net import GlobalMetricHead, RegressionHead
+from src.models.components.geodesic_nets import GeodesicBackbone
 from src.utils import fig2img, get_logger
 from src.utils.visualization import plot_2d_latent, plot_connectivity_graph
 from src.utils.eval_metrics import a_star_eval_global
@@ -15,13 +15,12 @@ from src.utils.eval_metrics import a_star_eval_global
 log = get_logger(__name__)
 
 
-class GlobalMetric(BaseModel):
+class GeodesicRegressor(BaseModel):
     """
     Geodesic regressor to approximate shortest path length between two latent codes
 
         Args:
             net: Geogedic regressor's encoder
-            head: Regression head to regress shortest path length
             optimizer: functools.partial torch.optim optimizer with all arguments except
             model parameters. Please refer to the Hydra doc for partially initialized modules.
             local_metric_path: Path to trained local_metric checkpoint.
@@ -35,23 +34,21 @@ class GlobalMetric(BaseModel):
     """
 
     def __init__(self,
-                 net: GlobalMetricHead,
-                 head: RegressionHead,
+                 net: GeodesicBackbone,
                  optimizer: functools.partial,
-                 local_metric_path: str,
+                 backbone_path: str,
                  n_edges: int = 1000,
                  lr_scheduler_config: Dict = None,
                  log_figure_every_n_epoch: int = 1,
                  noise: float = 1e-1,
                  freeze_backbone: bool = True):
-        super(GlobalMetric, self).__init__()
+        super(GeodesicRegressor, self).__init__()
 
         # Save hyperparameters to checkpoint
         self.save_hyperparameters(logger=False)
 
         # Select model
         self.net = net
-        self.head = head
 
         # Loss
         self.loss = torch.nn.MSELoss()
@@ -71,7 +68,7 @@ class GlobalMetric(BaseModel):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Global metric forward method
+        Geodesic regressor forward method
 
         Args:
             x: Batch of Images
@@ -90,7 +87,7 @@ class GlobalMetric(BaseModel):
         if self.training and self.hparams.noise > 0:
             x += torch.randn_like(x) * self.hparams.noise
 
-        # Forward through Global metric network
+        # Forward through Geodesic regressor network
         h = self.net.forward(x)
 
         return h.double()
@@ -158,13 +155,13 @@ class GlobalMetric(BaseModel):
             pred = pred[mask]
             target = target[mask]
 
-            # Offline graph evaluation - Note: Global head is trained only over one environment.
+            # Offline graph evaluation - Note: Geodesic head is trained only over one environment.
             # Make sure we embedded all the dataset. This check solves issues with the lightning sanity check
             graph = dataloader.dataset.graph
             dist = dataloader.dataset.geodesics_len
             if graph.number_of_nodes() == pred.shape[0]:
                 rel_avg_path_len, avg_access_rate, _ = a_star_eval_global(graph, 50, global_codes=pred,
-                                                                          regression_head=self.head, dijkstra_dist=dist)
+                                                                          dijkstra_dist=dist)
                 self.log('{}/rel_avg_path_len'.format(stage), rel_avg_path_len, prog_bar=True, logger=True)
                 self.log('{}/avg_access_rate'.format(stage), avg_access_rate, prog_bar=True, logger=True)
 
@@ -172,8 +169,8 @@ class GlobalMetric(BaseModel):
             fig = plot_2d_latent(pred, target[:, :2].sum(axis=1))  # Pick ground truth of last target
             current_epoch = self.trainer.current_epoch
             if self.logger is not None:
-                # Log global embeddings figure
-                self.log_fig2image(fig, f'{stage}_{env}_global_embedding_epoch_{current_epoch}')
+                # Log geodesic embeddings figure
+                self.log_fig2image(fig, f'{stage}_{env}_geodesic_embedding_epoch_{current_epoch}')
 
         # Plot local connectivity graph we are working with
         # Do this only once. Useful for debugging
@@ -190,6 +187,7 @@ class GlobalMetric(BaseModel):
                     figure = plot_connectivity_graph(graph, environment=dataloader.dataset.env_type,
                                                      n_edges=self.hparams.n_edges, plot_type=graph_type)
                 figures.append(figure)
+            current_epoch = self.trainer.current_epoch
             if self.logger is not None:
                 # Log derived connectivity for translation and rotations
                 self.log_fig2image(figures[0], f'{stage}_{env}_pos_connectivity_local_metric_{current_epoch}')
@@ -212,7 +210,8 @@ class GlobalMetric(BaseModel):
         # Forward method
         h_anchor, h_positive = self.forward(anchor), self.forward(pos)
         # Compute heuristic
-        heuristic = self.head(h_anchor.float(), h_positive.float()).squeeze().double()
+        heuristic = torch.linalg.norm(h_anchor - h_positive, dim=1)
+        # heuristic = self.head(h_anchor.float(), h_positive.float()).squeeze().double()
 
         # Match L2 norm to the Dijkstra cost - Zero the values that are inf in geodesic target
         loss = self.loss(heuristic * ~inf_mask, cost.masked_fill_(inf_mask, 0))

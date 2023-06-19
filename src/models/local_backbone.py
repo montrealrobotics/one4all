@@ -8,6 +8,7 @@ import networkx as nx
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from einops import rearrange
 import pytorch_lightning as pl
 
 from src.models.base_model import BaseModel
@@ -20,23 +21,20 @@ from src.utils import get_logger
 log = get_logger(__name__)
 
 
-class LocalMetric(BaseModel):
+class LocalBackbone(BaseModel):
     """
-    Local metric network implementation for a Maze/Habitat/JAckal Environment.
+    Local backbone network implementation for a Maze/Habitat/JAckal Environment.
 
         Args:
-            net: Local Metric (Backbone) for Maze or Jackal.
+            net: Local Backbone for Maze or Jackal.
             connectivity_head: Net used for predicting connectivity + actions.
             loss: Loss function, options are CEConnectivity or HingedLoss
             optimizer: functools partial torch.optim optimizer with all arguments except
             model parameters. Please refer to the Hydra doc for partially initialized modules.
-            eps: (NOT USED) Maximum distance value to have a loop-closure
             n_samples: Number of false positives edges used to plot
             rho: Min distance to consider an edge spurious
-            scale: (NOT USED) Scale the eps by this factor
-            n_edges: Number of edges to sample while plotting connectivity graph. Note: Only used for 
+            n_edges: Number of edges to sample while plotting connectivity graph. Note: Only used for
             monitoring/research - not used by the actual O4A model
-            low_eps: (NOT USED) Minimum distance value to have a loop-closure
             log_figure_every_n_epoch: Frequency at which figures should be logged. The counter only increases when
             validation_epoch_end is called
             val_loss: Validation Loss function, options are CEConnectivity or HingedLoss. Is False, use same as loss.
@@ -51,17 +49,14 @@ class LocalMetric(BaseModel):
                  connectivity_head: pl.LightningModule,
                  loss: Union[CEConnectivity, HingeLoss],
                  optimizer: functools.partial,
-                 eps: float,
                  n_samples: int,
                  rho: float,
-                 scale: Union[float, int],
                  n_edges: int,
-                 low_eps: float = 0,
                  log_figure_every_n_epoch: int = 1,
                  val_loss: Union[CEConnectivity, HingeLoss, None] = None,
                  lr_scheduler_config: Dict = None,
                  step_every: int = 4):
-        super(LocalMetric, self).__init__()
+        super(LocalBackbone, self).__init__()
 
         # This line allows to access init params with 'self.hparams' attribute
         # it also ensures init params will be stored in ckpt
@@ -90,7 +85,7 @@ class LocalMetric(BaseModel):
                                                                                    torch.Tensor,
                                                                                    torch.Tensor]:
         """
-        Local metric forward method
+        Local backbone forward method
 
         Args:
             x_anchor: Batch of sequence of images (anchors) [B, S, C, H, W]
@@ -101,7 +96,7 @@ class LocalMetric(BaseModel):
             Embedding representation of positives [B, D]
             Embedding representation of each anchor in the sequence (backbone) [B, K, D]
         """
-        # Forward through Local metric network
+        # Forward through Local backbone network
         p_anchor, p_pos = self.net.forward(x_anchor, x_pos)
 
         if p_pos is not None:
@@ -277,7 +272,7 @@ class LocalMetric(BaseModel):
     def _shared_loss_computation(self, batch: Dict[str, torch.Tensor], loss: HingeLoss) \
             -> Tuple[Dict[str, torch.Tensor], torch.Tensor, torch.Tensor]:
         """
-        Compute loss for the local metric network
+        Compute loss for the local backbone network
 
         Args:
             batch: Either train or validation batch
@@ -344,6 +339,7 @@ class LocalMetric(BaseModel):
         target = torch.cat([x["target"] for x in validation_step_outputs]).detach().cpu().numpy()
         # Fetch ground truth graph
         gt_graph = dataloader.dataset.get_ground_truth_graph()
+        chain_graph = dataloader.dataset.chain_graph
 
         # Compute and plot connectivity of the graph given current local backbone
         pos_conn_fig, rot_conn_fig, graph = self._connectivity_graph(dataloader, pred,
@@ -360,7 +356,7 @@ class LocalMetric(BaseModel):
                                                            environment=dataloader.dataset.env_type)
 
         # Classification metrics recovering non-transition edges
-        metrics = edges_minus_chains_recovered(gt_graph, dataloader.dataset.get_chain_graph(), graph)
+        metrics = edges_minus_chains_recovered(gt_graph, chain_graph, graph)
         log_metrics = {stage + '/' + key + '/' + env: val for key, val in metrics.items()}
         self.log_dict(log_metrics, prog_bar=True, logger=True)
 
@@ -390,7 +386,7 @@ class LocalMetric(BaseModel):
                             ids: np.ndarray,
                             number_gt_edges: int) -> object:
         """
-        Update the graph edges based on current local metric estimate and plot the graph.
+        Update the graph edges based on current local backbone estimate and plot the graph.
         Note: Method used for monitoring performance of the local backbone
 
         Args:
@@ -405,7 +401,7 @@ class LocalMetric(BaseModel):
         """
         # Update training graph - do not update graph attribute in validation dataloader
         if self.has_logged_debug_gt:
-            graph = self.update_graph(anchors=anchors, s_id=ids, batch_size=32, update=False,
+            graph = self.update_graph(anchors=anchors, indices=ids, update=False,
                                       dataset=dataloader.dataset, number_gt_edges=number_gt_edges)
         else:
             # Log debug ground truth graph
@@ -457,8 +453,8 @@ class LocalMetric(BaseModel):
                     batch.pop(key)
         return batch
 
-    def update_graph(self, anchors: np.ndarray, s_id: np.ndarray,
-                     batch_size: int, dataset: Dataset,
+    def update_graph(self, anchors: np.ndarray, indices: np.ndarray,
+                     dataset: Dataset,
                      update: bool = False,
                      number_gt_edges: int = 1e6) -> nx.Graph:
         """
@@ -466,7 +462,7 @@ class LocalMetric(BaseModel):
 
         Args:
             anchors: Training predictions for the anchors
-            s_id: State id of the predicted anchors
+            indices: State id of the predicted anchors
             batch_size: Original batch size of the model
             dataset: Used to retrieve useful information like the graph
             update: Whether if updated graph attribute in class should be updated with updated graph or not
@@ -479,75 +475,63 @@ class LocalMetric(BaseModel):
         counter = dict(closures=0, transitions=0, all=0)
         log.info('Updating {} graph for {}...'.format(dataset.split_raw, dataset.experiment))
 
-        if torch.is_tensor(s_id):
+        if torch.is_tensor(indices):
             # Remap to list as torch tensors generate issues with networkx
-            s_id = s_id.view(-1).detach().tolist()
+            indices = indices.view(-1).detach().tolist()
 
-        num_samples = anchors.shape[0]
-        num_batches = num_samples // batch_size if num_samples >= batch_size else num_samples
-        # Split the datamodule in chunks given the original batch size
-        anchor_batch = np.array_split(anchors, num_batches)
-        batch_idx = np.array_split(s_id, num_batches)
         # Create temporal graph object
         graph = nx.create_empty_copy(dataset.graph)
         # Placeholder with list of edges
         edges = []
 
         # Computation of action probabilities
-        anchors_tensor = torch.from_numpy(anchors).to(self.connectivity_head.device)
+        anchors = torch.from_numpy(anchors).to(self.connectivity_head.device)
 
-        for a_batch, i in tqdm(zip(anchor_batch, batch_idx), total=len(anchor_batch), desc='Updating graph...'):
+        for index, anchor in tqdm(zip(indices, anchors), total=len(indices), desc='Updating graph...'):
             # If we are accumulating too much edges, break the cycle
             # Note: This number does not have to be the ground truth number of edges but any arbitrarily large number
             if len(edges) > number_gt_edges * 15:
                 log.info(f"Breaking, there are 15 times more edges than in GT for {dataset.experiment}")
                 log.info(f"Number of GT edges {number_gt_edges} - Number of predicted edges {len(edges)}")
                 break
-            # mask needs to be of size batch_size x anchor
+            # Derive connectivity using connectivity head
             with torch.inference_mode():
-                a_batch_tensor = torch.from_numpy(a_batch).to(self.connectivity_head.device)
-                predicted_actions = list()
-                weights = list()
-                for j, a in enumerate(a_batch_tensor):
-                    # Repeat positive for each anchor
-                    positive_tensor = torch.repeat_interleave(a.unsqueeze(0),
-                                                              repeats=anchors_tensor.shape[0],
-                                                              dim=0)
-                    # Compute locomotion predictions on each (anchor, positive) pair
-                    # This is for all anchors, compute the prob score against one positive
-                    logits = self.connectivity_head(anchors_tensor.float(), positive_tensor.float())
-                    action_idx = logits.argmax(dim=1)
-                    predicted_actions.append(action_idx)
+                # Compute local distance
+                weights = rearrange(torch.cdist(rearrange(anchor, 'd -> 1 d'), anchors), '1 b -> b')
 
-                    # Save local distance
-                    dist = torch.cdist(anchors_tensor, a.unsqueeze(0)).squeeze()
-                    weights.append(dist)
+                # Repeat anchor n-samples times
+                anchor = torch.repeat_interleave(rearrange(anchor, 'd -> 1 d'), repeats=anchors.shape[0], dim=0)
+                # Compute locomotion predictions on each (anchor, positive) pair
+                # This is for a given anchor, compute the prob score against all other anchors
+                logits = self.connectivity_head(anchor.float(), anchors.float())
+                actions = logits.argmax(dim=1)
 
-            actions = torch.stack(predicted_actions)
+            # Use this to get geodesic for forward move, rotation, etc.
+            weights = weights.cpu().numpy()
+            actions = actions.cpu().numpy()
             counter['closures'] += (actions > 0).sum()
 
             if update:
                 # If updating graph, add back transition edges from the original graph of chains
                 # We only do so if the model predicted not connected for that edge
-                for i_r, r in enumerate(i):
-                    for i_c, c in enumerate(s_id):
-                        if dataset.graph.has_edge(c, r):
-                            # Replace predicted action in graph with GT action
-                            actions[i_r, i_c] = dataset.graph.edges[c, r]['action'][0]
-                            if actions[i_r, i_c] == 0:
-                                # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
-                                counter["transitions"] += 1
+                for i_c, c in enumerate(indices):
+                    if dataset.graph.has_edge(index, c):
+                        # Replace predicted action in graph with GT action
+                        # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
+                        actions[i_c] = dataset.graph.edges[index, c]['action'][0]
+                        if actions[i_c] == 0:
+                            # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
+                            counter["transitions"] += 1
 
-            # Use this to get geodesic for forward move, rotation, etc.
-            weights = torch.stack(weights).cpu().numpy()
 
             # Extract selected edges + weight and add to list of edges
             if actions.any():
-                row, column = np.nonzero(actions.cpu().numpy())  # 0 is disconnected
-                weight = weights[row, column]
-                actions = actions[row, column].cpu().numpy()
-                batch_edges = [(s_id[c], i[r], {'weight': w, 'action': a}) for r, c, w, a in
-                               zip(row, column, weight, actions)]
+                columns = np.nonzero(actions)[0]  # 0 is disconnected
+                weights = weights[columns]
+                actions = actions[columns]
+                batch_edges = [(index, indices[c], {'weight': w, 'action': a}) for c, w, a in zip(columns,
+                                                                                                  weights,
+                                                                                                  actions)]
                 edges.extend(batch_edges)
 
         log.info('Edges successfully computed')

@@ -52,7 +52,7 @@ def gen_planning_trajectories(local_metric_path: str, global_metric_path: str, e
     # Build local graph
     # Build graph from local metric
     print('Building graph with local metric...')
-    nx_graph = data_module.update_graph(anchors=local_codes, s_id=indices, eps=eps, batch_size=64)
+    nx_graph = data_module.update_graph(anchors=local_codes, indices=indices, eps=eps, batch_size=64)
     local_metric_graph = nx.to_scipy_sparse_array(nx_graph)
 
     # Debugging visualizations

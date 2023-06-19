@@ -1,4 +1,4 @@
-_target_: src.models.components.global_net.GlobalMetricHead
+_target_: src.models.components.geodesic_nets.GeodesicBackbone
 emb_dim: ${local_emb_dim}                # Embedding dimension of local metric
 n_layers: 2                              # Number of layers of the model
 activation: relu                         # Activation function

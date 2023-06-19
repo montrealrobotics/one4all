@@ -1,5 +1,5 @@
-_target_: src.models.components.global_net.RegressionHead
-emb_dim: ${local_emb_dim}                # Embedding dimension of local metric
+_target_: src.models.components.geodesic_nets.RegressionHead
+emb_dim: ${model.net.emb_dim}            # Embedding dimension of local metric
 aggregation: delta                       # [concat, delta, relative] aggregation type
 add_norm: false                          # Whether to add norm for input of model or not
 out_activation: elu                      # Activation at the output [elu]
