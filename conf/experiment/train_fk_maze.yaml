@@ -3,8 +3,8 @@
 # Config to train a locomotion head locally
 defaults:
   - train_base
-  - override /datamodule: fd
-  - override /model: fd
+  - override /datamodule: forward_kinematics
+  - override /model: forward_kinematics
   - override /model/loss: mse
   - override /model/optimizer: adam
   - override /model/lr_scheduler_config: cycliclr

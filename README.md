@@ -98,21 +98,21 @@ python3 run_habitat.py env=habitat sim_env=Annawan policy=habitat_shortest diffi
 Train your components is easy giving the configs we provided within this repository. If you want to train the models in
 your own dataset you need to train them as follows.
 
-### Local Backbone and Connectivity Head
+### Local Backbone and Inverse Kinematics Head
 
-As specified in the paper, local backbone and connectivity head are trained jointly. An example is given below where 
+As specified in the paper, local backbone and inverse kinematics head are trained jointly. An example is given below where 
 both models are trained for five epochs using a convolutional predictor using (by default) the Annawan environment:
 
 ```bash
 python3 train.py env=habitat experiment=train_local_habitat model.net.predictor=conv1d epochs=5
 ```
 
-### Forward Dynamics
+### Forward Kinematics
 
-Once local backbone and connectivity head is trained, forward dynamics can be trained with the next command:
+Once local backbone and inverse kinematics head is trained, forward kinematics can be trained with the next command:
 
 ```bash
-python3 train.py experiment=train_fd_habitat env=habitat epochs=5
+python3 train.py experiment=train_fk_habitat env=habitat epochs=5
 ```
 
 Note that you may need to make sure the path `checkpoints.backbone_path` is properly pointing to the checkpoint of your 
@@ -137,7 +137,7 @@ the following way
 components
 └── habitat
     ├── backbone.ckpt
-    ├── fd.ckpt
+    ├── fk.ckpt
     └── geodesic_regressors
         ├── annawan.ckpt
         ...

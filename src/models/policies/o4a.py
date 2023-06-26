@@ -16,7 +16,7 @@ from einops import rearrange
 from src import utils
 from src.datamodule.dataset import get_aug_keys
 from src.models.base_model import BaseModel
-from src.models.forward_dynamics import ForwardDynamicsHead
+from src.models.forward_kinematics import ForwardDynamicsHead
 
 log = utils.get_logger(__name__)
 
@@ -36,7 +36,7 @@ class One4All(BaseModel):
         Args:
             backbone_path: Path to local metric checkpoint.
             gr_path:  Path to global metric checkpoint. Trained over local codes.
-            fd_path: Path to forward dynamics network. Trained over local codes.
+            fk_path: Path to forward dynamics network. Trained over local codes.
             transform: Transforms to be applied to the images before passing them to the models.
             att_factor: Scaling factor applied to the attractive force to the goal.
             rep_factor: Scaling factor applied to the repulsive force from previously visited states.
@@ -50,7 +50,7 @@ class One4All(BaseModel):
             stop_d_local: Agent calls stop if local distance to goal is < stop_d_local.
     """
 
-    def __init__(self, backbone_path: str, gr_path: str = None, fd_path: str = None,
+    def __init__(self, backbone_path: str, gr_path: str = None, fk_path: str = None,
                  transform=None, att_factor: float = 1., rep_factor: float = 1., repulsor_radius: float = 1.1,
                  n_visited: int = 10, collision_len: float = .26, collision_width: float = .1,
                  collision_penalty: float = 10., stop_d_local: float = 0.):
@@ -95,16 +95,16 @@ class One4All(BaseModel):
         self.eval()
         # Prevent backbone of contrasting and map head to proper device
         self.backbone.contrast = False
-        self.backbone.connectivity_head = self.backbone.connectivity_head.to(self.device)
+        self.backbone.inverse_kinematics = self.backbone.inverse_kinematics.to(self.device)
 
         # Extract number of 'panorama' images for the model
         self.k = self.backbone.hparams.net.k
 
         # Forward dynamics are not loaded by parent class
-        if fd_path is not None:
-            self.fd_head = ForwardDynamicsHead.load_from_checkpoint(fd_path, strict=False)
-            self.fd_head.freeze()
-            self.fd_head.eval()
+        if fk_path is not None:
+            self.fk_head = ForwardDynamicsHead.load_from_checkpoint(fk_path, strict=False)
+            self.fk_head.freeze()
+            self.fk_head.eval()
 
         # Transform keys
         self.current_aug_keys, _ = get_aug_keys(k=self.k, n_positives=1)
@@ -162,12 +162,10 @@ class One4All(BaseModel):
 
         # Compute distances to goal
         if self.geodesic_regressor is not None:
-            self.d_to_goal_global = torch.cdist(self.state_global, self.goal_global, p=2).squeeze()
-            # TODO: remove this if above works
-            # self.d_to_goal_global = self.geodesic_regressor.head(
-            #     self.state_global.float(),
-            #     self.goal_global.float(),
-            # ).double().squeeze()
+            self.d_to_goal_global = self.geodesic_regressor.head(
+                self.state_global.float(),
+                self.goal_global.float(),
+            ).double().squeeze()
         else:
             self.d_to_goal = np.inf
         self.d_to_goal_local = torch.linalg.norm(self.state_local - self.goal_local, ord='fro')
@@ -176,8 +174,8 @@ class One4All(BaseModel):
         """Forward all actions to generate waypoints."""
         # This vector is of dim (actions - 2) since we exclude NOT CONNECTED and STOP
         # NOT CONNECTED is already excluded so we only need to exclude the first component again
-        # self.waypoints_local = self.fd_head.net.forward_all_actions(self.state_local)[0][1:]
-        self.waypoints_local = self.fd_head.net.forward_all_actions(self.state_local)[0]
+        # self.waypoints_local = self.fk_head.net.forward_all_actions(self.state_local)[0][1:]
+        self.waypoints_local = self.fk_head.net.forward_all_actions(self.state_local)[0]
         self.actions = torch.arange(self.waypoints_local.shape[0]) + 1
 
     def update_collision_prob(self):
@@ -249,13 +247,11 @@ class One4All(BaseModel):
     def compute_attractive_potentials(self) -> torch.Tensor:
         """Attractor to goal in global space."""
         # Global planning using geodesic distances
-        potentials = torch.cdist(rearrange(self.waypoints_global, 'b -> 1 b'), self.get_goal()).squeeze()
-        # TODO: remove this if above works
-        # potentials = self.geodesic_regressor.head.forward_all_codes(
-        #     self.waypoints_global.float(),
-        #     self.get_goal().float(),
-        #     deployment=True
-        # ).double().squeeze()
+        potentials = self.geodesic_regressor.head.forward_all_codes(
+            self.waypoints_global.float(),
+            self.get_goal().float(),
+            deployment=True
+        ).double().squeeze()
         if not potentials.ndim:
             # Torch item. Map to 1D vector of size 1
             potentials = potentials.reshape((1,))
@@ -289,7 +285,7 @@ class One4All(BaseModel):
 
     def goal_action(self):
         """Check if goal is reachable"""
-        a_to_goal = self.backbone.connectivity_head(self.state_local.float(), self.goal_local.float())
+        a_to_goal = self.backbone.inverse_kinematics(self.state_local.float(), self.goal_local.float())
 
         return a_to_goal.squeeze().argmax().item()
 

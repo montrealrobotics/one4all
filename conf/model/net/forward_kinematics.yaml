@@ -1,4 +1,4 @@
-_target_: src.models.forward_dynamics.ForwardDynamics
+_target_: src.models.forward_kinematics.ForwardKinematics
 emb_dim: ${local_emb_dim}                   # Embedding dimension of local metric
 n_actions: ${n_actions}                     # Size of the output.
 n_layers: 3                                 # Number of hidden layers

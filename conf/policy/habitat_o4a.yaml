@@ -1,6 +1,6 @@
 _target_: src.models.policies.o4a.One4All
 backbone_path: ${checkpoints.backbone_path}        # Path to local checkpoint
-fd_path: ${checkpoints.fd_path}                        # Path to forward dynamics
+fk_path: ${checkpoints.fk_path}                        # Path to forward dynamics
 gr_path: ${checkpoints.gr_path}             # Path to global checkpoint
 att_factor: 1                                          # Multiplicative factor applied to positive potentials
 rep_factor: 1                                          # Multiplicative factor applied to repulsive potentials
