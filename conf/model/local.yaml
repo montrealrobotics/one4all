@@ -1,7 +1,7 @@
 defaults:
   - base
   - net: habitat                                 # Pick whichever model you want here [jackal, maze]
-  - net@connectivity_head: connectivity          # Pick whichever model you want here [jackal, maze]
+  - net@inverse_kinematics: inverse_kinematics    # Pick whichever model you want here [jackal, maze]
   - loss: ce_none                                # Pick loss here [infonce, hinge]
   - loss@val_loss: null                          # Pick loss here [infonce, hinge] Null will use the same as train
 

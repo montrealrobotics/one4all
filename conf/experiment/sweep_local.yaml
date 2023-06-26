@@ -31,10 +31,10 @@ hydra:
       datamodule.aug_anchor: choice(false)
       datamodule.augmentations: choice(false, augmented)
       # Model connectivity head
-      model.connectivity_head.n_layers: choice(2, 4)
-      model.connectivity_head.aggregation: choice(concat, relative)
-      model.connectivity_head.add_norm: choice(false)
-      model.connectivity_head.normalize_input: choice(true)
+      model.inverse_kinematics.n_layers: choice(2, 4)
+      model.inverse_kinematics.aggregation: choice(concat, relative)
+      model.inverse_kinematics.add_norm: choice(false)
+      model.inverse_kinematics.normalize_input: choice(true)
       # Model Net
       model.step_every: choice(1)
       model.net.emb_dim: choice(256)

@@ -2,8 +2,8 @@
 
 defaults:
   - sweep_base
-  - override /datamodule: fd
-  - override /model: fd
+  - override /datamodule: forward_kinematics
+  - override /model: forward_kinematics
   - override /model/loss: mse
   - override /metric: val_loss
 

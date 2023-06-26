@@ -6,6 +6,7 @@ defaults:
   - override /datamodule: geodesic
   - override /model: geodesic
   - override /model/net: geodesic
+  - override /model/net@model.head: regressor
   - override /model/optimizer: adam
   - override /model/lr_scheduler_config: cycliclr
 
@@ -16,6 +17,9 @@ model:
   net:
     n_layers: 3
     activation: relu
+  head:
+    aggregation: delta
+    add_norm: false
   optimizer:
     lr: 0.005
 

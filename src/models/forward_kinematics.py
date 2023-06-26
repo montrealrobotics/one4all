@@ -10,7 +10,7 @@ from src.utils.eval_metrics import aggregate_val_metrics
 from src.models.components import activation_function, LinearBlock
 
 
-class ForwardDynamics(pl.LightningModule):
+class ForwardKinematics(pl.LightningModule):
     """
     Forward Latent Dynamics modeling x_{positive} = f(x_{anchor}, action)
 
@@ -103,7 +103,7 @@ class ForwardDynamics(pl.LightningModule):
         return positives.reshape((x.shape[0], self.n_actions, -1))
 
 
-class ForwardDynamicsHead(BaseModel):
+class ForwardKinematicsHead(BaseModel):
     """
     Forward dynamics model, reconstructs a positive latent code given the current anchor and discrete action
 
@@ -131,7 +131,7 @@ class ForwardDynamicsHead(BaseModel):
                  backbone_path: str = None,
                  noise: float = 0.0,
                  step_every: int = 4):
-        super(ForwardDynamicsHead, self).__init__()
+        super(ForwardKinematicsHead, self).__init__()
 
         # Save hyperparameters to checkpoint
         self.save_hyperparameters(logger=False)
