@@ -188,7 +188,7 @@ class One4AllDataset(Dataset):
         self.dt = dt
         self.h = h
         # Create undirected graph
-        self.graph = nx.Graph()
+        self.graph = nx.DiGraph()
         self.any_positive = any_positive
         # Radius to compute ground truth graph
         self.gt_radius = [gt_radius[0], gt_radius[1]]
@@ -217,9 +217,14 @@ class One4AllDataset(Dataset):
             self.graph.update(chain_graph)
 
         # Backup original graph of chains as undirected - only needed to train local metric
-        self.chain_graph: nx.Graph = remove_attributes(self.graph.copy(),
+        self.chain_graph: nx.Graph = remove_attributes(self.graph.copy().to_undirected(),
                                                        node_attr=['gt', 'image_path', 'action_counts'],
                                                        edge_attr=['action', 'reward'])
+        # Save chain_graph in memory
+        chain_graph_directed: nx.Graph = remove_attributes(self.graph.copy(),
+                                                           node_attr=['gt', 'image_path', 'action_counts'],
+                                                           edge_attr=['action', 'reward'])
+        save_graph(os.path.join(self.path, 'chain_graph_directed.pkl'), chain_graph_directed)
 
         # Create list of keys to pass augmentations
         self.anchor_aug_keys, self.pos_aug_keys = get_aug_keys(self.k, self.n_positives)
@@ -233,6 +238,9 @@ class One4AllDataset(Dataset):
 
     def get_ground_truth_graph(self):
         return load_graph(os.path.join(self.path, 'gt_graph.pkl'))
+
+    def get_chain_graph(self):
+        return load_graph(os.path.join(self.path, 'chain_graph_directed.pkl'))
 
     def _build_gt_graph(self, graph):
         log.info('Computing ground truth graph for environment {}'.format(self.experiment))
@@ -248,8 +256,8 @@ class One4AllDataset(Dataset):
             r_xy += 0.1
             edges = self.euclidian_radius_neighbors(gt_array, r_xy)
 
-            # Create final ground truth graph
-            gt_graph = nx.create_empty_copy(graph)
+            # Create final ground truth graph - Transform directed to undirected, populate, and then move to directed
+            gt_graph = nx.create_empty_copy(graph).to_undirected(reciprocal=False)
             gt_graph.update(edges=edges)
         else:
             # Used to compute GT geodesic of SE(2) environments
@@ -257,7 +265,7 @@ class One4AllDataset(Dataset):
             mask = habitat_connectivity(gt_array, forward=self.gt_radius[0], angle=self.gt_radius[1])
 
             # Display some stats on connectivity
-            mask_chains = nx.adjacency_matrix(self.chain_graph)
+            mask_chains = nx.adjacency_matrix(load_graph(os.path.join(self.path, 'chain_graph_directed.pkl')))
             chain_edges = mask_chains.sum()
             closure_edges = ((mask - mask_chains) == 1).sum()
             total = mask.sum()
@@ -272,11 +280,11 @@ class One4AllDataset(Dataset):
             # Create edges
             edges = [(r, c, {'weight': w + 1e-6}) for r, c, w in zip(rows, cols, weights)]
 
-            # Create undirected edges
-            gt_graph = nx.create_empty_copy(graph)
+            # Create directed edges
+            gt_graph = nx.create_empty_copy(graph).to_directed()
             gt_graph.update(edges=edges)
 
-        log.info(f"Is ground truth graph connected: {nx.is_connected(gt_graph)} - Environment {self.experiment}")
+        log.info(f"Is ground truth graph connected: {nx.is_weakly_connected(gt_graph)} - Environment {self.experiment}")
         return gt_graph
 
     def compute_geodesics(self, gt_array: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -357,7 +365,10 @@ class One4AllDataset(Dataset):
         # Count current number of nodes in Graph
         number_states = self.graph.number_of_nodes()
         # Chain graph and add edges with weight = 1
-        local_graph = nx.path_graph(np.arange(number_states, number_states + number_new_states))
+        local_graph = nx.path_graph(
+            np.arange(number_states, number_states + number_new_states),
+            create_using=nx.DiGraph
+        )
         nx.set_edge_attributes(local_graph, values=1, name='weight')
 
         for s in range(number_states, number_states + number_new_states, 1):
@@ -599,13 +610,10 @@ class One4AllDataset(Dataset):
             ## This condition is only used to train FD ##
             #############################################
             # Ignore temporal neighbor and sample from updated graph instead
-            neighbors = list(self.graph.neighbors(idx))
-            positive_ids = np.random.choice(neighbors, size=self.n_positives).reshape(-1, 1).tolist()
-            # # Ignore temporal neighbor and sample from updated graph instead
-            # successors = list(self.graph.successors(idx))
-            # # Condition to prevent sampling empty list when populating list for the first time
-            # successors = [idx] if len(successors) == 0 else successors
-            # positive_ids = np.random.choice(successors, size=self.n_positives).reshape(-1, 1).tolist()
+            successors = list(self.graph.successors(idx))
+            # Condition to prevent sampling empty list when populating list for the first time
+            successors = [idx] if len(successors) == 0 else successors
+            positive_ids = np.random.choice(successors, size=self.n_positives).reshape(-1, 1).tolist()
             # All actions for forward dynamics come from connection head - This is an instance of Co-training
             target = 0
         elif self.n_positives > 0 and self.any_positive and not self.temporal:
@@ -674,7 +682,7 @@ class One4AllDataset(Dataset):
 
         # Check components in graph
         n_components, labels = scipy.sparse.csgraph.connected_components(graph,
-                                                                         directed=False,
+                                                                         directed=True,
                                                                          return_labels=True)
         if n_components != 1:
             log.warning(f'Train graph is not connected. Has {n_components} components.')
@@ -684,7 +692,7 @@ class One4AllDataset(Dataset):
 
         log.info('Precomputing Dijkstra distances (this may take a while)...')
         # If predecessors = 9999, then there is not path between the two samples
-        geodesics_len, predecessors = dijkstra(graph, return_predecessors=True, directed=False)
+        geodesics_len, predecessors = dijkstra(graph, return_predecessors=True, directed=True)
         self.geodesics_len = geodesics_len
 
         # Store newly computed geodesics in memory

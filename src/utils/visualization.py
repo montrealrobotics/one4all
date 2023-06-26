@@ -295,7 +295,7 @@ def plot_connectivity_graph(graph: nx.Graph, environment: str = 'maze',
     plt.xlim(x_min - offset, x_max + offset)
     plt.ylim(y_min - offset, y_max + offset)
     plt.axis("off")
-    plt.title(f"Is {plot_type} graph weakly connected? {nx.is_connected(graph)}", fontsize=16)
+    plt.title(f"Is {plot_type} graph weakly connected? {nx.is_weakly_connected(graph)}", fontsize=16)
     # plt.tight_layout()
     return fig
 

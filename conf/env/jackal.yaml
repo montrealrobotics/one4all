@@ -12,7 +12,7 @@ sim_env: null
 checkpoints:
   base_path: "components/jackal"
   backbone_path: "${checkpoints.base_path}/backbone_finetuned.ckpt"  # Backbone + connectivity head
-  fd_path: "${checkpoints.base_path}/fd.ckpt"
+  fk_path: "${checkpoints.base_path}/fk.ckpt"
   gr_path: "${checkpoints.base_path}/gr.ckpt"
 
 

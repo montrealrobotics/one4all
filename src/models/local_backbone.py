@@ -27,7 +27,7 @@ class LocalBackbone(BaseModel):
 
         Args:
             net: Local Backbone for Maze or Jackal.
-            connectivity_head: Net used for predicting connectivity + actions.
+            inverse_kinematics: Net used for predicting connectivity + actions.
             loss: Loss function, options are CEConnectivity or HingedLoss
             optimizer: functools partial torch.optim optimizer with all arguments except
             model parameters. Please refer to the Hydra doc for partially initialized modules.
@@ -46,7 +46,7 @@ class LocalBackbone(BaseModel):
 
     def __init__(self,
                  net: pl.LightningModule,
-                 connectivity_head: pl.LightningModule,
+                 inverse_kinematics: pl.LightningModule,
                  loss: Union[CEConnectivity, HingeLoss],
                  optimizer: functools.partial,
                  n_samples: int,
@@ -70,7 +70,7 @@ class LocalBackbone(BaseModel):
         self.val_loss = val_loss if val_loss is not None else self.loss  # Use same loss as training
         # Map model to double
         self.net = net
-        self.connectivity_head = connectivity_head
+        self.inverse_kinematics = inverse_kinematics
         # Used to use all other examples in batch as negatives for a given anchor
         self.contrast = True
         self.has_logged_debug_gt = True  # Set false to log ground truth graph once
@@ -111,7 +111,7 @@ class LocalBackbone(BaseModel):
             else:
                 p_anchor_input = p_anchor
                 p_pos_input = p_pos
-            logits = self.connectivity_head(p_anchor_input, p_pos_input)
+            logits = self.inverse_kinematics(p_anchor_input, p_pos_input)
             p_pos = p_pos.double()
         else:
             p_pos = None
@@ -303,7 +303,7 @@ class LocalBackbone(BaseModel):
         # Fetch augmented version of anchors if available and forward
         p_anchor_aug = self.forward(x_anchor=batch['anchors_aug'])[0] if batch.get('anchors_aug') is not None else False
         if p_anchor_aug is not False:
-            aug_anchor_logits = self.connectivity_head(p_anchor.float(), p_anchor_aug.float()).double()
+            aug_anchor_logits = self.inverse_kinematics(p_anchor.float(), p_anchor_aug.float()).double()
             # Create logits target for zero distance target at the end of tensor
             aug_anchor_target = torch.ones((aug_anchor_logits.size(0),), device=target.device).long()
             batch['action'] = torch.cat((batch['action'], aug_anchor_target), dim=0)
@@ -339,7 +339,6 @@ class LocalBackbone(BaseModel):
         target = torch.cat([x["target"] for x in validation_step_outputs]).detach().cpu().numpy()
         # Fetch ground truth graph
         gt_graph = dataloader.dataset.get_ground_truth_graph()
-        chain_graph = dataloader.dataset.chain_graph
 
         # Compute and plot connectivity of the graph given current local backbone
         pos_conn_fig, rot_conn_fig, graph = self._connectivity_graph(dataloader, pred,
@@ -356,7 +355,7 @@ class LocalBackbone(BaseModel):
                                                            environment=dataloader.dataset.env_type)
 
         # Classification metrics recovering non-transition edges
-        metrics = edges_minus_chains_recovered(gt_graph, chain_graph, graph)
+        metrics = edges_minus_chains_recovered(gt_graph, dataloader.dataset.get_chain_graph(), graph)
         log_metrics = {stage + '/' + key + '/' + env: val for key, val in metrics.items()}
         self.log_dict(log_metrics, prog_bar=True, logger=True)
 
@@ -485,7 +484,7 @@ class LocalBackbone(BaseModel):
         edges = []
 
         # Computation of action probabilities
-        anchors = torch.from_numpy(anchors).to(self.connectivity_head.device)
+        anchors = torch.from_numpy(anchors).to(self.inverse_kinematics.device)
 
         for index, anchor in tqdm(zip(indices, anchors), total=len(indices), desc='Updating graph...'):
             # If we are accumulating too much edges, break the cycle
@@ -503,7 +502,7 @@ class LocalBackbone(BaseModel):
                 anchor = torch.repeat_interleave(rearrange(anchor, 'd -> 1 d'), repeats=anchors.shape[0], dim=0)
                 # Compute locomotion predictions on each (anchor, positive) pair
                 # This is for a given anchor, compute the prob score against all other anchors
-                logits = self.connectivity_head(anchor.float(), anchors.float())
+                logits = self.inverse_kinematics(anchor.float(), anchors.float())
                 actions = logits.argmax(dim=1)
 
             # Use this to get geodesic for forward move, rotation, etc.
@@ -520,7 +519,8 @@ class LocalBackbone(BaseModel):
                         # TODO: this will break as if edge (i,j) has action, edge (j,i) will not have action
                         actions[i_c] = dataset.graph.edges[index, c]['action'][0]
                         if actions[i_c] == 0:
-                            # Use graph here, it should not be updated, and it is directed whereas chain_graph is undirected
+                            # Use graph here, it should not be updated, and it is directed whereas
+                            # chain_graph is undirected
                             counter["transitions"] += 1
 
 
@@ -551,7 +551,7 @@ class LocalBackbone(BaseModel):
             avg_abs_grad = dict(
                 grad_encoder=self.avg_abs_grad(self.net.encoder),
                 grad_predictor=self.avg_abs_grad(self.net.predictor),
-                grad_connectivity=self.avg_abs_grad(self.connectivity_head),
+                grad_connectivity=self.avg_abs_grad(self.inverse_kinematics),
             )
             log_metrics = {'train/' + key + '/all_env': val for key, val in avg_abs_grad.items()}
             self.log_dict(log_metrics, prog_bar=False, logger=True)

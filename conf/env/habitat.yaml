@@ -17,7 +17,7 @@ sim_env: "Annawan"
 checkpoints:
   base_path: "components/habitat"
   backbone_path: "${checkpoints.base_path}/backbone.ckpt"  # Backbone + connectivity head
-  fd_path: "${checkpoints.base_path}/fd.ckpt"
+  fk_path: "${checkpoints.base_path}/fk.ckpt"
 
   # Warning. This path can be updated in the simulator script depending on sim_env
   # to easily change between geodesic regressor heads

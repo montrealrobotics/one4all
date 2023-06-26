@@ -1,9 +1,9 @@
 defaults:
   - base
-  - net: fd
+  - net: forward_kinematics
   - loss: mse
 
-_target_: src.models.forward_dynamics.ForwardDynamicsHead
+_target_: src.models.forward_kinematics.ForwardKinematicsHead
 backbone_path: ${checkpoints.backbone_path}      # Path to trained local checkpoint
 noise: 0.0
 step_every: 1
